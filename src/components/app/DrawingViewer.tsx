@@ -10,7 +10,7 @@ type VB = { x: number; y: number; w: number; h: number };
 
 export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName }: {
   elements: ShipElement[]; results: Result[]; selectedElementId: string | null; onSelectElement: (id: string) => void;
-  pdfUrl: string | null; fileName?: string;
+  pdfUrl: string | null; fileName?: string | undefined;
 }) {
   const pages = useMemo(() => [...new Set(elements.map((e) => e.page))].sort((a, b) => a - b), [elements]);
   const [page, setPage] = useState(pages[0] ?? 1);

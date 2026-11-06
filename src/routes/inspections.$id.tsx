@@ -100,7 +100,7 @@ function InspectionPage() {
   const selects = [
     { k: "status", label: "Status", opts: [["all", "All statuses"], ["FAIL", "FAIL"], ["UNKNOWN", "UNKNOWN"], ["PASS", "PASS"], ["REVIEW", "Needs review"]] },
     { k: "ruleSet", label: "Rule set", opts: [["all", "All rule sets"], ...uniq(insp.results.map((r) => r.rule_set)).map((x) => [x, x])] },
-    { k: "type", label: "Element type", opts: [["all", "All elements"], ...uniq(insp.elements.map((e) => e.type)).map((x) => [x, x[0].toUpperCase() + x.slice(1)])] },
+    { k: "type", label: "Element type", opts: [["all", "All elements"], ...uniq(insp.elements.map((e) => e.type)).map((x) => [x, x.charAt(0).toUpperCase() + x.slice(1)])] },
     { k: "deck", label: "Space", opts: [["all", "All spaces"], ...uniq(insp.elements.map((e) => e.space)).map((x) => [x, `${x} · Deck 1`])] },
   ] as const;
 

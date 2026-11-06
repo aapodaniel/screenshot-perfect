@@ -4,7 +4,7 @@ export type Method = "OCR" | "Vector measurement" | "Text" | "3D model" | "Engin
 export type ElementType = "cabin" | "door" | "corridor";
 
 export interface Evidence {
-  attr?: string;
+  attr?: string | undefined;
   value: number | null;
   unit: string;
   confidence: Confidence;
@@ -16,7 +16,7 @@ export interface Evidence {
 }
 export interface Attr extends Evidence {
   /** Other sources reporting a different value for the same attribute. */
-  conflicts?: Evidence[];
+  conflicts?: Evidence[] | undefined;
 }
 export interface ShipElement {
   id: string;
@@ -37,8 +37,8 @@ export interface Result {
   element_id: string;
   status: Status;
   needs_review: boolean;
-  reviewed?: boolean;
-  notes?: string[];
+  reviewed?: boolean | undefined;
+  notes?: string[] | undefined;
   rule_set: string;
   clause_ref: string;
   clause_text: string;

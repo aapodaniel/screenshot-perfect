@@ -114,8 +114,9 @@ export function translateClause(text: string): Omit<Rule["condition"], never> | 
   if (/(at least|minimum|not less than|no less than|≥|shall be min)/.test(t)) op = ">=";
   else if (/(maximum|not exceed|not more than|no more than|at most|≤)/.test(t)) op = "<=";
   if (!op) return null;
-  const value = parseFloat(num[1].replace(",", "."));
-  const unit = num[2] === "m2" ? "m²" : num[2] === "n" ? "N" : num[2];
+  const value = parseFloat((num[1] ?? "0").replace(",", "."));
+  const raw = num[2] ?? "";
+  const unit = raw === "m2" ? "m²" : raw === "n" ? "N" : raw;
   const map: [RegExp, string, string][] = [
     [/(threshold|sill)/, "sill_height", "Sill height"],
     [/(turning|diameter)/, "turning_diameter", "Turning diameter"],
@@ -126,7 +127,7 @@ export function translateClause(text: string): Omit<Rule["condition"], never> | 
     [/force/, "opening_force", "Opening force"],
     [/height/, "height", "Height"],
   ];
-  const hit = map.find(([re]) => re.test(t)) ?? [/./, "value", "Value"];
+  const hit: [RegExp, string, string] = map.find(([re]) => re.test(t)) ?? [/./, "value", "Value"];
   const suffix = unit === "m²" ? "m2" : unit.toLowerCase();
   return {
     attr: `${hit[1]}_${suffix}`,

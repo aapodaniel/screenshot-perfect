@@ -183,7 +183,7 @@ function evaluateAll(insp: Stored) {
 function refresh(insp: Stored) {
   if (insp.status === "done") return;
   const step = Math.min(4, Math.floor((Date.now() - insp._started) / STEP_MS));
-  insp.progress = { step, label: steps[step] };
+  insp.progress = { step, label: steps[step] ?? "" };
   insp.status = step >= 4 ? "done" : step === 0 ? "queued" : "running";
   if (insp.status === "done") evaluateAll(insp);
 }
@@ -200,10 +200,10 @@ function seed() {
     evaluateAll(s); store.set(id, s);
   };
   mk("rv60-rev-b", "GA Deck 1 accommodation — rev B", 21, (els) => {
-    els.forEach((e) => { delete e.attrs.headroom_mm?.conflicts; });
-    els.find((e) => e.id === "D-01-36-3")!.attrs.clear_width_mm.value = 760;
+    els.forEach((e) => { if (e.attrs["headroom_mm"]) delete e.attrs["headroom_mm"].conflicts; });
+    els.find((e) => e.id === "D-01-36-3")!.attrs["clear_width_mm"]!.value = 760;
   });
-  mk("rv60-rev-c", "GA Deck 1 accommodation — rev C", 9, (els) => { els.forEach((e) => { delete e.attrs.headroom_mm?.conflicts; }); });
+  mk("rv60-rev-c", "GA Deck 1 accommodation — rev C", 9, (els) => { els.forEach((e) => { if (e.attrs["headroom_mm"]) delete e.attrs["headroom_mm"].conflicts; }); });
   mk(DEMO_ID, "GA Deck 1 accommodation — rev D", 0.2);
 }
 export const DEMO_ID = "rv60-rev-d";
@@ -280,9 +280,9 @@ export async function proposeRule(input: { text: string; clause_ref: string; rul
   await delay(500);
   const cond = translateClause(input.text);
   if (!cond) return { ok: false as const, error: "No measurable threshold with a comparison (minimum / maximum) was found in the text. Nothing was proposed." };
-  const rs = ruleSets.find((r) => r.id === input.rule_set_id)!;
+  const rs = ruleSets.find((r) => r.id === input.rule_set_id) ?? ruleSets[0]!;
   const draft: Rule = {
-    id: `${rs.authority.split(" ")[0].toUpperCase()}-${input.clause_ref.replace(/[^\w.]+/g, "").slice(-12) || Date.now().toString(36)}`,
+    id: `${(rs.authority.split(" ")[0] ?? "RULE").toUpperCase()}-${input.clause_ref.replace(/[^\w.]+/g, "").slice(-12) || Date.now().toString(36)}`,
     rule_set_id: rs.id, rule_set: rs.name, name: input.name || cond.label, clause_ref: input.clause_ref, clause_text: input.text.trim(),
     applies_to: input.applies_to, condition: cond, required_inputs: [cond.attr], tests: defaultTests({ condition: cond }),
     recommend_fail: "Modify {element} by {diff} to comply.", missing_owner: "Responsible discipline", status: "proposed",

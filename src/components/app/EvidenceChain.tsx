@@ -21,7 +21,7 @@ function Step({ icon: Icon, title, children, last, tone }: { icon: typeof BookTe
 }
 
 export function EvidenceChain({ result: r, element, onClose, onReviewed, onNote }: {
-  result: Result; element?: ShipElement; onClose: () => void; onReviewed: () => void; onNote: (n: string) => void;
+  result: Result; element?: ShipElement | undefined; onClose: () => void; onReviewed: () => void; onNote: (n: string) => void;
 }) {
   const [auditOpen, setAuditOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
