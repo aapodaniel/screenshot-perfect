@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Pre-bundle up front so a late re-optimization can't load two React copies.
+    optimizeDeps: {
+      include: ["sonner", "pdfjs-dist", "@radix-ui/react-dropdown-menu", "@radix-ui/react-tabs", "@radix-ui/react-dialog", "@radix-ui/react-switch", "@radix-ui/react-checkbox"],
+    },
+  },
 });
