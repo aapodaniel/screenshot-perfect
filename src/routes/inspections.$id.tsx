@@ -138,7 +138,7 @@ function InspectionPage() {
                   <Input value={f.q} onChange={(e) => setF((v) => ({ ...v, q: e.target.value }))} placeholder="Search check, element, clause" className="h-8 pl-8" />
                 </div>
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_420px] items-start gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_380px] items-start gap-4">
                 <div className="space-y-4">
                   <DrawingViewer elements={insp.elements} results={insp.results} selectedElementId={selected?.element_id ?? null}
                     onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) setSel(r.id); }}

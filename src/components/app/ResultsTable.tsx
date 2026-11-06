@@ -7,7 +7,7 @@ export function ResultsTable({ results, elements, selectedId, onSelect }: {
 }) {
   const el = (id: string) => elements.find((e) => e.id === id);
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
+    <div className="overflow-x-auto rounded-md border bg-card">
       <table className="w-full text-sm">
         <thead className="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
           <tr>
@@ -27,10 +27,10 @@ export function ResultsTable({ results, elements, selectedId, onSelect }: {
                   <div className="flex flex-col items-start gap-1"><StatusBadge status={r.status} />{r.needs_review && <ReviewBadge />}</div>
                 </td>
                 <td className="px-3 py-2 font-medium">{r.check_name}<div className="text-xs font-normal text-muted-foreground">{r.rule_set}</div></td>
-                <td className="px-3 py-2"><div className="font-mono text-xs">{r.element_id}</div><div className="text-xs text-muted-foreground">{e?.space} · {e?.deck}</div></td>
+                <td className="px-3 py-2"><div className="whitespace-nowrap font-mono text-xs">{r.element_id}</div><div className="text-xs text-muted-foreground">{e?.space} · {e?.deck}</div></td>
                 <td className="px-3 py-2 text-xs">{r.clause_ref}</td>
-                <td className="px-3 py-2 text-right font-mono text-xs tnum">{r.measured === null ? <span className="text-unknown">—</span> : `${r.measured} ${r.unit}`}</td>
-                <td className="px-3 py-2 text-right font-mono text-xs tnum">{r.required} {r.unit}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-right font-mono text-xs tnum">{r.measured === null ? <span className="text-unknown">—</span> : `${r.measured} ${r.unit}`}</td>
+                <td className="px-3 py-2 whitespace-nowrap text-right font-mono text-xs tnum">{r.required} {r.unit}</td>
                 <td className="px-3 py-2"><ConfidenceTag c={r.confidence} /></td>
               </tr>
             );

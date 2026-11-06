@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- All API calls and types go through `src/lib/api.ts`; demo mode and network-error fallback use `src/lib/mockData.ts` — keeps the app usable with zero backend.
+- PASS/FAIL/UNKNOWN is decided only in `src/lib/rulesEngine.ts` (covered by `rulesEngine.test.ts`); missing or conflicting evidence must yield UNKNOWN — core product principle.
