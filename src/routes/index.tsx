@@ -8,7 +8,7 @@ import { api, DEMO_ID, qk } from "@/lib/api";
 import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>) => ({ calibrate: String(search.calibrate ?? "") }),
+  validateSearch: (search: Record<string, unknown>): { calibrate?: string } => ({ calibrate: String(search["calibrate"] ?? "") }),
   head: () => ({ meta: [
     { title: "Check a ship design — ProvenAI" },
     { name: "description", content: "Check a ship drawing against engineering rules. See door violations on the drawing and what needs more information." },

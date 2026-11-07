@@ -24,7 +24,7 @@ import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/inspections/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({ calibrate: String(search.calibrate ?? "") }),
+  validateSearch: (search: Record<string, unknown>): { calibrate?: string } => ({ calibrate: String(search["calibrate"] ?? "") }),
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
