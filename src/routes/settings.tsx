@@ -43,10 +43,6 @@ function SettingsPage() {
             <div><div className="text-sm font-medium">Use demo data</div><p className="text-xs text-muted-foreground">Built-in example vessel. Also used automatically if the API cannot be reached.</p></div>
             <Switch checked={s.demo} onCheckedChange={(v) => setSettings({ demo: v })} aria-label="Use demo data" />
           </section>
-          <section className="flex items-center justify-between rounded-md border bg-card p-4">
-            <div><div className="text-sm font-medium">Dark mode</div></div>
-            <Switch checked={s.theme === "dark"} onCheckedChange={(v) => setSettings({ theme: v ? "dark" : "light" })} aria-label="Dark mode" />
-          </section>
         </div>
         <aside className="space-y-3 rounded-md border bg-card p-4 text-sm">
           <h2 className="font-semibold">Deployment</h2>

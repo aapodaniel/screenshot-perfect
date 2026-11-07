@@ -30,14 +30,13 @@ function ApiStatus() {
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
-  const { theme } = useSettings();
-  useEffect(() => { document.documentElement.classList.toggle("dark", theme === "dark"); }, [theme]);
+  useEffect(() => { document.documentElement.classList.remove("dark"); }, []);
 
   return (
     <div className="flex min-h-screen w-full">
       <aside className={cn("app-sidebar no-print sticky top-0 flex h-screen shrink-0 flex-col border-r bg-sidebar transition-[width]", collapsed ? "w-14" : "w-48")}>
         <div className="flex h-16 items-center gap-2 border-b px-4">
-          <div className="grid h-7 w-7 shrink-0 place-items-center rounded bg-primary font-mono text-xs font-bold text-primary-foreground">P</div>
+          <div className="grid h-7 w-7 shrink-0 place-items-center border border-foreground font-mono text-xs font-semibold">P</div>
           {!collapsed && <span className="sidebar-label text-xl font-medium">ProvenAI</span>}
         </div>
         <nav className="flex-1 space-y-0.5 p-2">
@@ -46,7 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link key={n.to} to={n.to} title={n.label}
                 className={cn("flex items-center gap-2.5 rounded px-2.5 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent",
-                  active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground")}>
+                   active && "sidebar-active font-semibold text-sidebar-accent-foreground")}>
                 <n.icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
                 {!collapsed && <span className="sidebar-label">{n.label}</span>}
               </Link>
@@ -63,7 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Button>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="app-topbar no-print sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between border-b bg-background/95 px-5 backdrop-blur">
+        <header className="app-topbar no-print sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between border-b bg-card px-4">
           <div className="flex items-baseline gap-2 text-sm">
             <span className="font-semibold">RV60 Research Vessel</span>
             <span className="font-mono text-xs text-muted-foreground">Hull 1147</span>

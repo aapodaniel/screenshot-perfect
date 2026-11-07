@@ -9,12 +9,12 @@ const listeners = new Set<() => void>();
 export function getSettings(): Settings {
   if (typeof window === "undefined") return DEFAULT_SETTINGS;
   if (!cache) {
-    try { cache = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { cache = DEFAULT_SETTINGS; }
+    try { cache = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(KEY) || "{}"), theme: "light" }; } catch { cache = DEFAULT_SETTINGS; }
   }
-  return cache!;
+  return cache ?? DEFAULT_SETTINGS;
 }
 export function setSettings(patch: Partial<Settings>) {
-  cache = { ...getSettings(), ...patch };
+  cache = { ...getSettings(), ...patch, theme: "light" };
   localStorage.setItem(KEY, JSON.stringify(cache));
   listeners.forEach((l) => l());
 }

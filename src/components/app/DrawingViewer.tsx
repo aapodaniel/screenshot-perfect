@@ -3,9 +3,10 @@ import { Maximize, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Result, ShipElement, Status } from "@/lib/types";
 import { drawingCallout } from "@/lib/presentation";
+import referenceDrawing from "@/assets/rv60-first-deck.png.asset.json";
+import fullPlan from "@/assets/rv60-general-arrangement.pdf.asset.json";
 import { statusColorVar, statusRank } from "./Status";
 
-const PAGE_W = 1191, PAGE_H = 842; // A3 landscape in PDF points
 
 type VB = { x: number; y: number; w: number; h: number };
 
@@ -18,7 +19,8 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
   const [page, setPage] = useState(pages[0] ?? 1);
   const [pdfPages, setPdfPages] = useState<number[]>([]);
   const [img, setImg] = useState<{ src: string; w: number; h: number } | null>(null);
-  const W = img?.w ?? PAGE_W, H = img?.h ?? PAGE_H;
+  const reference = !pdfUrl;
+  const W = img?.w ?? 1918, H = img?.h ?? 504;
   const fit: VB = { x: 0, y: 0, w: W, h: H };
   const [vb, setVb] = useState<VB>(fit);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -57,7 +59,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
   // Zoom to the selected element.
   useEffect(() => {
     const el = elements.find((e) => e.id === selectedElementId);
-    if (!el) return;
+    if (!el || reference) return;
     if (el.page !== page) setPage(el.page);
     const [x0, y0, x1, y1] = el.bbox;
     const aspect = (svgRef.current?.clientWidth ?? 640) / Math.max(svgRef.current?.clientHeight ?? 360, 1);
@@ -80,16 +82,16 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
   const markerIds = ordered.filter((el) => worst.get(el.id) === "FAIL" || worst.get(el.id) === "UNKNOWN").sort((a, b) => (statusRank[worst.get(a.id) ?? "PASS"] - statusRank[worst.get(b.id) ?? "PASS"])).slice(0, markerLimit).map((el) => el.id);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">
+    <div className="drawing-sheet flex h-full min-h-0 flex-col overflow-hidden bg-card">
       <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3">
         <div className="flex items-center gap-2 text-xs">
-          <span className="max-w-[240px] truncate text-muted-foreground">{fileName ?? "Drawing"}</span>
-          {!img && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">Demo drawing</span>}
+          <span className="max-w-[240px] truncate text-muted-foreground">{reference ? "RV60 · 1st deck · GA2017117-01" : fileName ?? "Drawing"}</span>
+          {reference && <a href={fullPlan.url} target="_blank" rel="noreferrer" className="text-[10px] underline text-muted-foreground">Full plan</a>}
         </div>
         <div className="flex items-center gap-1">
-          <select value={page} onChange={(e) => setPage(+e.target.value)} className="h-7 rounded border bg-background px-1.5 font-mono text-xs" aria-label="Page">
+          {!reference && <select value={page} onChange={(e) => setPage(+e.target.value)} className="h-7 rounded border bg-background px-1.5 font-mono text-xs" aria-label="Page">
             {(pdfPages.length ? pdfPages : pages.length ? pages : [1]).map((p) => <option key={p} value={p}>Page {p}</option>)}
-          </select>
+          </select>}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoom(1 / 1.3)} aria-label="Zoom in"><Plus className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoom(1.3)} aria-label="Zoom out"><Minus className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setVb(fit)} aria-label="Fit page"><Maximize className="h-3.5 w-3.5" /></Button>
@@ -97,11 +99,8 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
       </div>
       <svg ref={svgRef} aria-label="Inspection drawing" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="block min-h-0 w-full flex-1 cursor-grab touch-none bg-canvas active:cursor-grabbing"
         onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => (drag.current = null)} preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="var(--canvas-line)" strokeOpacity="0.08" /></pattern>
-        </defs>
-        {img ? <image href={img.src} x={0} y={0} width={W} height={H} /> : <Schematic />}
-        {ordered.map((el) => {
+        {img ? <image href={img.src} x={0} y={0} width={W} height={H} /> : <image href={referenceDrawing.url} x={0} y={0} width={W} height={H} />}
+        {!reference && ordered.map((el) => {
           const [x0, y0, x1, y1] = el.bbox;
           const st = worst.get(el.id);
           const color = st ? statusColorVar[st] : "var(--muted-foreground)";
@@ -112,14 +111,14 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           const labelX = cx + 18, labelY = cy - 32;
           return (
             <g key={el.id} data-element={el.id} data-marker={marker ? st : undefined} opacity={selectedElementId && !sel && marker ? 0.5 : 1} onClick={(e) => { e.stopPropagation(); onSelectElement(el.id); }} className="cursor-pointer">
-              <rect x={x0} y={H - y1} width={x1 - x0} height={y1 - y0} fill={color} fillOpacity={sel ? 0.12 : 0}
-                stroke={sel || marker ? color : "var(--canvas-line)"} strokeOpacity={sel || marker ? 1 : 0.25} strokeDasharray={st === "UNKNOWN" ? "8 4" : undefined} strokeWidth={sel ? 4 : marker ? 2 : 1} vectorEffect="non-scaling-stroke" />
-              {marker && number > 0 && <g><circle cx={cx} cy={cy} r={12} fill="var(--card)" stroke={color} strokeWidth={2} /><text x={cx} y={cy + 4} fontSize={11} fontFamily="JetBrains Mono, monospace" textAnchor="middle" fill={color}>{number}</text><rect x={labelX} y={labelY} width={el.id.length * 7 + 12} height={20} rx={2} fill="var(--card)" stroke="var(--border)" /><text x={labelX + 6} y={labelY + 14} fontSize={11} fontFamily="JetBrains Mono, monospace" fill="var(--foreground)">{el.id}</text></g>}
-              {!marker && el.type === "cabin" && <text x={x0 + 6} y={H - y1 + 16} fontSize={12} fontFamily="JetBrains Mono, monospace" fill="var(--canvas-line)">{el.type === "cabin" ? el.space : el.id}</text>}
+              <rect x={x0} y={H - y1} width={x1 - x0} height={y1 - y0} fill={color} fillOpacity={0}
+                stroke={sel || marker ? color : "none"} strokeOpacity={sel || marker ? 1 : 0.25} strokeDasharray={st === "UNKNOWN" ? "8 4" : undefined} strokeWidth={st === "UNKNOWN" ? 1 : 2} vectorEffect="non-scaling-stroke" />
+              {marker && number > 0 && <g><circle cx={cx} cy={cy} r={12} fill="var(--card)" stroke={color} strokeWidth={2} /><text x={cx} y={cy + 4} fontSize={11} fontFamily="IBM Plex Mono, monospace" textAnchor="middle" fill={color}>{number}</text><rect x={labelX} y={labelY} width={el.id.length * 7 + 12} height={20} rx={2} fill="var(--card)" stroke="var(--border)" /><text x={labelX + 6} y={labelY + 14} fontSize={11} fontFamily="IBM Plex Mono, monospace" fill="var(--foreground)">{el.id}</text></g>}
+              {!marker && el.type === "cabin" && <text x={x0 + 6} y={H - y1 + 16} fontSize={12} fontFamily="IBM Plex Mono, monospace" fill="var(--canvas-line)">{el.type === "cabin" ? el.space : el.id}</text>}
             </g>
           );
         })}
-        {selectedResult && onWhy && (() => {
+        {!reference && selectedResult && onWhy && (() => {
           const el = elements.find((e) => e.id === selectedResult.element_id);
           if (!el || el.page !== page) return null;
           const [x0, y0, x1, y1] = el.bbox;
@@ -138,33 +137,21 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           </g>;
         })()}
       </svg>
-    </div>
-  );
-}
+      {reference && <table className="drawing-title-block" aria-label="Drawing title block"><tbody>
+        <tr><td>VESSEL</td><td>RV60 · ARCTIC RESEARCH</td></tr>
+        <tr><td>DRAWING</td><td>GA2017117-01 · 1st DECK</td></tr>
+        <tr><td>REV / SCALE</td><td>01 / 1:125 (original)</td></tr>
+        <tr><td>DATE</td><td>01.11.2017</td></tr>
+        <tr><td>CHECKED BY</td><td>ProvenAI · DEMO ONLY</td></tr>
+      </tbody></table>}
+      {reference && selectedResult && onWhy && <div className="reference-finding drawing-callout" data-status={selectedResult.status}>
+        <p className="text-[10px] text-muted-foreground">DEMO FINDING · LOCATION NOT MAPPED</p>
+        <p className="mt-1 text-xs">{selectedResult.element_id}</p>
+        <p className="text-xs">{drawingCallout(selectedResult)}</p>
+        <p className="mt-1 text-[10px] text-muted-foreground">Supplied plan is not the RCRV evidence drawing.</p>
+        <Button variant="link" size="sm" className="h-6 px-0" onClick={onWhy}>Why?</Button>
+      </div>}
 
-function Schematic() {
-  const H = PAGE_H;
-  const y = (v: number) => H - v;
-  const line = "var(--canvas-line)";
-  return (
-    <g>
-      <rect x={0} y={0} width={PAGE_W} height={PAGE_H} fill="url(#grid)" />
-      {/* hull outline, deck 1 plan */}
-      <path d={`M80 ${y(420)} L980 ${y(380)} Q1130 ${y(421)} 980 ${y(700)} L80 ${y(660)} Z`} fill="none" stroke={line} strokeWidth={2} />
-      {/* corridor */}
-      <rect x={300} y={y(470)} width={680} height={45} fill="none" stroke={line} strokeOpacity={0.5} strokeDasharray="6 4" />
-      <text x={310} y={y(440)} fontSize={10} fill={line} fontFamily="JetBrains Mono, monospace">CORRIDOR 01-C1</text>
-      {/* stairs + mess as context */}
-      <rect x={140} y={y(640)} width={160} height={170} fill="none" stroke={line} strokeOpacity={0.5} />
-      <text x={150} y={y(620)} fontSize={11} fill={line} fontFamily="JetBrains Mono, monospace">MESS 01-30</text>
-      {Array.from({ length: 8 }).map((_, i) => <line key={i} x1={1000 - i * 0} x2={1060} y1={y(500 + i * 14)} y2={y(500 + i * 14)} stroke={line} strokeOpacity={0.4} />)}
-      {Array.from({ length: 23 }).map((_, i) => (
-        <g key={i}><line x1={120 + i * 40} x2={120 + i * 40} y1={y(372)} y2={y(362)} stroke={line} strokeOpacity={0.6} />
-          {i % 2 === 0 && <text x={116 + i * 40} y={y(348)} fontSize={8} fill={line} fontFamily="JetBrains Mono, monospace">{26 + i}</text>}</g>
-      ))}
-      <text x={80} y={y(100)} fontSize={11} fill={line} fontFamily="JetBrains Mono, monospace" opacity={0.7}>GENERAL ARRANGEMENT · DECK 1 · FR 26–48 · SHEET 10/24</text>
-      <line x1={80} x2={280} y1={y(130)} y2={y(130)} stroke={line} strokeWidth={2} />
-      <text x={80} y={y(140)} fontSize={9} fill={line} fontFamily="JetBrains Mono, monospace">0          5 m</text>
-    </g>
+    </div>
   );
 }

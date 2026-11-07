@@ -13,4 +13,9 @@
 - [x] Drawing-first results, short right-side findings and Why callout
 - [x] Remove main-screen jargon and verify ADA 813 mm/demo counts
 - [x] Verify the home-to-result flow and preserved actions
-- [ ] Align overlays on the real RCRV drawing (blocked: drawing not attached)
+- [ ] Align overlays on the real RCRV drawing (blocked: supplied RV60, Dana V and GO SARS plans do not match RCRV cabin evidence)
+
+# CAD restyling
+- [x] Apply light paper palette, Plex fonts, square controls, dense findings and plain sidebar
+- [x] Replace schematic with supplied real plan; preserve honest drawing identity and demo evidence
+- [x] Verify check, finding details, drawing controls and mobile layout
