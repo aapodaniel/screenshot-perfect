@@ -9,6 +9,8 @@ import { useSettings } from "@/lib/settings";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Inspections — ProvenAI" },
       { name: "description", content: "Past compliance inspections of ship design documents with PASS, FAIL and UNKNOWN counts." },
       { property: "og:title", content: "Inspections — ProvenAI" },

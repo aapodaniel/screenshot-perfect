@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/inspections/$id")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Inspection result — ProvenAI" },
       { name: "description", content: "Compliance results with the full evidence chain for every check." },
       { property: "og:title", content: "Inspection result — ProvenAI" },
@@ -148,7 +150,7 @@ function InspectionPage() {
                     {s.opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
                 ))}
-                <div className="relative ml-auto w-64">
+                <div className="relative ml-auto w-64 max-w-full">
                   <Search className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
                   <Input value={f.q} onChange={(e) => setF((v) => ({ ...v, q: e.target.value }))} placeholder="Search check, element, clause" className="h-8 pl-8" />
                 </div>
@@ -159,7 +161,7 @@ function InspectionPage() {
                   <DrawingViewer elements={insp.elements} results={rows} selectedElementId={selected?.element_id ?? null}
                     onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
                     pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf?.name} />
-                  {selected && detailsOpen && <div className="evidence-overlay absolute right-0 top-12 z-10 h-[680px] w-[min(440px,100%)] overflow-hidden border-l border-b bg-card shadow-lg">
+                  {selected && detailsOpen && <div className="evidence-overlay absolute right-0 top-12 z-10 h-[680px] w-[min(360px,100%)] overflow-hidden border-l border-b bg-card shadow-lg">
                     <EvidenceChain key={selected.id} result={selected} element={insp.elements.find((e) => e.id === selected.element_id)}
                       onClose={() => setDetailsOpen(false)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} />
                   </div>}

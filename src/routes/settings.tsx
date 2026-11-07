@@ -12,6 +12,8 @@ import { setSettings, useSettings } from "@/lib/settings";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Settings — ProvenAI" },
       { name: "description", content: "Configure the on-premise API connection and demo data mode." },
       { property: "og:title", content: "Settings — ProvenAI" },

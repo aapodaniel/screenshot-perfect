@@ -6,6 +6,7 @@ import { fileIcon, fmtSize } from "@/lib/files";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { InspectionStepper } from "@/components/app/InspectionStepper";
 import { PageHeader } from "@/components/app/AppShell";
 import { api, qk } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/inspections/new")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "New inspection — ProvenAI" },
       { name: "description", content: "Upload drawings, specs and models and choose rule sets to check against." },
       { property: "og:title", content: "New inspection — ProvenAI" },
@@ -39,8 +42,9 @@ function NewInspection() {
 
   return (
     <div>
+      <InspectionStepper step={files.length ? 2 : 1} />
       <PageHeader title="New inspection" sub="Any file type: PDF drawings, scans, 3D/BIM exports, spreadsheets, JSON, text specifications." />
-      <div className="grid grid-cols-[1fr_360px] gap-6 p-6">
+      <div className="grid grid-cols-[1fr_360px] gap-8 p-8">
         <div className="space-y-4">
           <div>
             <label className="text-xs font-medium text-muted-foreground" htmlFor="iname">Inspection name</label>
@@ -72,7 +76,7 @@ function NewInspection() {
         </div>
         <aside className="space-y-4">
           <div className="rounded-md border bg-card">
-            <div className="border-b px-4 py-2.5 text-sm font-medium">Rule sets</div>
+            <div className="border-b px-4 py-2.5 text-sm font-medium">Choose rule packs</div>
             <ul className="divide-y">
               {sets?.map((s) => (
                 <li key={s.id}>

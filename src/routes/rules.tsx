@@ -17,6 +17,8 @@ import { useSettings } from "@/lib/settings";
 export const Route = createFileRoute("/rules")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Rule library — ProvenAI" },
       { name: "description", content: "Deterministic compliance rules translated from regulation text, each with edge-case self-tests." },
       { property: "og:title", content: "Rule library — ProvenAI" },
