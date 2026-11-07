@@ -6,7 +6,7 @@ import { headerStage } from '@/lib/headerPresentation';
 
 export function CheckerHeader({ loaded = false, checked = false, running = false, results = [], packs = [], visibility = { FAIL: true, UNKNOWN: true, PASS: false }, onToggle, onLoad, onRun, onReview, title }: {
   loaded?: boolean; checked?: boolean; running?: boolean; results?: Result[]; packs?: RuleSet[];
-  visibility?: Record<Status, boolean>; onToggle?: (status: Status) => void; onLoad?: () => void; onRun?: () => void; onReview?: () => void; title?: string;
+  visibility?: Record<Status, boolean>; onToggle?: (status: Status) => void; onLoad?: () => void; onRun?: () => void; onReview?: () => void; title?: string | undefined;
 }) {
   const stage = headerStage(loaded, checked, results);
   const failures = results.filter(result => result.status === 'FAIL').length;
