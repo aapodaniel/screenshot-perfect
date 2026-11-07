@@ -9,7 +9,7 @@ import { revisionCloud } from '@/lib/redlineGeometry';
 import drawing from '@/assets/rcrv-deck01-cabins.png.asset.json';
 import { toast } from 'sonner';
 
-export function DailyReport({ insp, previous, demo = true, printOnly = false }: { insp: Inspection; previous?: Inspection; demo?: boolean; printOnly?: boolean }) {
+export function DailyReport({ insp, previous, demo = true, printOnly = false }: { insp: Inspection; previous?: Inspection | undefined; demo?: boolean; printOnly?: boolean }) {
   const checks = useCheckedDrawings();
   const [engineer, setEngineer] = useState('');
   const today = new Date().toLocaleDateString('en-GB');
