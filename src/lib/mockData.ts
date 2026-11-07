@@ -10,6 +10,8 @@ const DOORS = "Door-schedule_D-01.xlsx";
 const IFC = "RV60_accommodation.ifc";
 
 export const ruleSets: RuleSet[] = [
+  { id: "colreg-annex-i", name: "COLREG – Annex I", authority: "COLREG", description: "Navigation light checks — import an approved pack before use." },
+  { id: "load-line-reg-12", name: "Load Line – Reg. 12", authority: "Load Line", description: "Door checks — import an approved pack before use." },
   { id: "dnv-acc", name: "DNV – Accommodation", authority: "DNV (placeholder)", description: "Crew accommodation space, headroom and floor area requirements." },
   { id: "ada-doors", name: "ADA – Doors", authority: "2010 ADA Standards", description: "Doors, doorways and gates on accessible routes (§404)." },
   { id: "pvag-acc", name: "PVAG – Accessibility", authority: "PVAG", description: "Passenger vessel accessibility: turning space and operable parts." },

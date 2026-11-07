@@ -104,7 +104,7 @@ function AddRule({ open, onOpenChange }: { open: boolean; onOpenChange: (o: bool
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm"><span className="rounded bg-review-soft px-1.5 py-0.5 text-xs font-medium text-review">Proposed — awaiting approval</span>
+            <div className="flex items-center gap-2 text-sm"><span className="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">Proposed — awaiting approval</span>
               <span className="text-muted-foreground">{res.rule.tests.filter((t) => t.passed).length}/{res.rule.tests.length} self-tests passed</span></div>
             <RuleBody rule={res.rule} />
             <div className="flex justify-end gap-2">
@@ -121,6 +121,7 @@ function AddRule({ open, onOpenChange }: { open: boolean; onOpenChange: (o: bool
 function Rules() {
   useSettings();
   const { data } = useQuery({ queryKey: ["rules", ...qk.all()], queryFn: api.rules });
+  const { data: packs } = useQuery({ queryKey: ["rulesets", ...qk.all()], queryFn: api.ruleSets });
   const [open, setOpen] = useState<Rule | null>(null);
   const [adding, setAdding] = useState(false);
   const [imported, setImported] = useState<Rule[]>([]);
@@ -159,6 +160,7 @@ function Rules() {
                   </tr></Fragment>
                 );
               })}
+              {packs?.filter((pack) => !data?.some((r) => r.rule_set_id === pack.id)).map((pack) => <tr key={pack.id} className="border-t"><td colSpan={5} className="px-4 py-4"><span className="font-medium">{pack.name}</span><p className="mt-2 text-xs text-muted-foreground">No approved rules yet. Import a rule pack or add a rule for engineer approval.</p></td></tr>)}
             </tbody>
           </table>
         </div>
