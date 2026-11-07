@@ -36,3 +36,7 @@
 - [x] Regulation/section/rule tree with tests and latest applications
 - [x] Printable daily report with actual counts, crops and copy summary (session work, explicit previous revision; no fabricated yesterday totals)
 - [x] Verify central flow, reports, imports and desktop/mobile screens
+# Unified header
+- [x] Replace three strips with title, workflow/counters and context-aware action zones
+- [x] Move rule packs into dropdown and zoom onto canvas; preserve secondary actions
+- [x] Verify load, check, counters, review progression, report and legibility on desktop/mobile

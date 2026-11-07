@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { CheckerHeader } from './CheckerHeader';
 import { CheckerWorkspace } from './CheckerWorkspace';
 import { DrawingViewer } from './DrawingViewer';
 import { api, DEMO_ID } from '@/lib/api';
@@ -35,9 +36,10 @@ export function DrawingStart({ calibrate }: { calibrate: boolean }) {
   if(loaded) return <CheckerWorkspace id={DEMO_ID} calibrate={calibrate} loadLines={lines}/>;
   return <div className="drawing-start no-print">
     <input hidden ref={input} type="file" accept=".pdf,.ifc,.json" onChange={e=>{openFile(e.target.files);e.target.value='';}}/>
+    <CheckerHeader loaded={!!file} title={file?.name} running={loading} onLoad={loadTest}/>
     <section className={`empty-sheet ${over?'drag-over':''}`} aria-label="Drawing drop zone" onDragOver={e=>{e.preventDefault();setOver(true);}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))setOver(false);}} onDrop={e=>{e.preventDefault();setOver(false);openFile(e.dataTransfer.files);}}>
-      {file ? <><header className="canvas-heading">DRAWING · {file.name}<Button variant="ghost" onClick={()=>setFile(null)}>CLOSE</Button></header><DrawingViewer elements={[]} results={[]} selectedElementId={null} onSelectElement={()=>{}} pdfUrl={file.url} fileName={file.name}/><div className="file-preview-message">{message} <Button asChild variant="outline"><Link to="/inspections/new">NEW INSPECTION</Link></Button></div></> : <>
-      <div className="empty-sheet-copy"><h1>NO DRAWING LOADED</h1><p>Drop a general arrangement drawing here (PDF, IFC or design JSON)</p><div>or <Button onClick={loadTest} disabled={loading}>LOAD RCRV TEST DRAWING</Button><Button variant="ghost" onClick={()=>input.current?.click()} aria-label="Browse drawing files">OPEN FILE</Button></div>{message && <p role="status">{message} <Link to="/inspections/new">New inspection</Link></p>}</div>
+      {file ? <><header className="canvas-heading">DRAWING · {file.name}<Button variant="ghost" onClick={()=>setFile(null)}>CLOSE</Button></header><DrawingViewer compact elements={[]} results={[]} selectedElementId={null} onSelectElement={()=>{}} pdfUrl={file.url} fileName={file.name}/><div className="file-preview-message">{message} <Button asChild variant="outline"><Link to="/inspections/new">NEW INSPECTION</Link></Button></div></> : <>
+      <div className="empty-sheet-copy"><h1>NO DRAWING LOADED</h1><p>Drop a general arrangement drawing here (PDF, IFC or design JSON)</p><div><Button variant="ghost" onClick={()=>input.current?.click()} aria-label="Browse drawing files">OPEN FILE</Button></div>{message && <p role="status">{message} <Link to="/inspections/new">New inspection</Link></p>}</div>
       {loading && <aside className="loading-margin"><h2>CHECKER'S NOTES</h2>{lines.map(line=><p key={line}>{line}</p>)}</aside>}
       <table className="drawing-title-block" aria-label="Empty drawing title block"><tbody>{['VESSEL','DRAWING','REV'].map(label=><tr key={label}><td>{label}</td><td>—</td></tr>)}</tbody></table>
       </>}

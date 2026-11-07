@@ -41,3 +41,5 @@ use the editor.
 - Reference drawings are CDN asset pointers displayed by DrawingViewer; demo finding geometry lives exclusively in normalized src/data/overlays.json mappings resolved by drawingOverlays.ts, never in PDF bboxes or compliance logic, so calibration changes cannot alter verdicts.
 - DrawingStart owns the empty/load state; uploaded PDFs are preview-only in demo mode and never inherit reference findings, because demo fixtures are not document extraction.
 - Daily reports derive verdicts from inspection results and today's work from browser-session run events in checkerSession; unavailable daily baselines, source pages and model versions stay explicitly unavailable rather than fabricated.
+
+- CheckerHeader owns shared title, workflow, counters and primary action; headerPresentation derives action stages from review state without altering compliance decisions.
