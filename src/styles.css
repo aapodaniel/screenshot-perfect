@@ -202,6 +202,12 @@ h1 { font-size: 24px !important; line-height: 1.25; }
 @media (max-width: 700px) {
   .drawing-title-block { font-size: 8px; }
   .drawing-title-block td { padding: 2px 4px; }
-  .reference-finding { bottom: 100px; max-width: 210px; }
+  .reference-finding { position: static; max-width: none; margin: 4px; flex-shrink: 0; }
+  .reference-finding p:not(:first-child), .reference-finding button { display: inline; margin-right: 4px; }
+  .reference-finding p.text-muted-foreground:last-of-type { display: none; }
+  .drawing-title-block { display: none; }
+  .drawing-sheet > div:first-child > div:first-child { min-width: 0; }
+  .drawing-sheet > div:first-child > div:last-child { flex-shrink: 0; }
+  .inspection-workspace[data-state="active"] { grid-template-rows: minmax(260px, 2fr) minmax(120px, 1fr); }
   .design-home { min-height: 600px; }
 }

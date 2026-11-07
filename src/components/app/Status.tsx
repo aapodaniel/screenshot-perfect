@@ -12,7 +12,7 @@ const map = {
 export function StatusBadge({ status, className }: { status: Status; className?: string }) {
   const { icon: Icon, cls } = map[status];
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] font-semibold tracking-wide", cls, className)}>
+    <span className={cn("inline-flex items-center gap-1 text-[11px] font-semibold uppercase", cls, className)}>
       <span className={cn("h-2 w-2 border border-current", status !== "UNKNOWN" && "bg-current")} aria-hidden />
       {statusLabel[status]}
     </span>

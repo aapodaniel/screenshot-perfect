@@ -89,9 +89,9 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           {reference && <a href={fullPlan.url} target="_blank" rel="noreferrer" className="text-[10px] underline text-muted-foreground">Full plan</a>}
         </div>
         <div className="flex items-center gap-1">
-          <select value={page} onChange={(e) => setPage(+e.target.value)} className="h-7 rounded border bg-background px-1.5 font-mono text-xs" aria-label="Page">
+          {!reference && <select value={page} onChange={(e) => setPage(+e.target.value)} className="h-7 rounded border bg-background px-1.5 font-mono text-xs" aria-label="Page">
             {(pdfPages.length ? pdfPages : pages.length ? pages : [1]).map((p) => <option key={p} value={p}>Page {p}</option>)}
-          </select>
+          </select>}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoom(1 / 1.3)} aria-label="Zoom in"><Plus className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoom(1.3)} aria-label="Zoom out"><Minus className="h-3.5 w-3.5" /></Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setVb(fit)} aria-label="Fit page"><Maximize className="h-3.5 w-3.5" /></Button>
