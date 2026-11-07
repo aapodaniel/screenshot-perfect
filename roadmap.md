@@ -13,7 +13,9 @@
 - [x] Drawing-first results, short right-side findings and Why callout
 - [x] Remove main-screen jargon and verify ADA 813 mm/demo counts
 - [x] Verify the home-to-result flow and preserved actions
-- [ ] Align overlays on the real RCRV drawing (blocked: supplied RV60, Dana V and GO SARS plans do not match RCRV cabin evidence)
+- [ ] Align overlays on the supplied public RCRV cabin image; rename the second violation to D-01-31-2
+- [ ] Remove confidential GA2017117 media and references from the demo
+- [ ] Add normalized JSON overlays, calibration clicks, selection zoom and leader-line callouts; verify the demo flow
 
 # CAD restyling
 - [x] Apply light paper palette, Plex fonts, square controls, dense findings and plain sidebar
