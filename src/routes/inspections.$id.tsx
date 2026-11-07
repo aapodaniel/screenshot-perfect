@@ -71,11 +71,10 @@ function InspectionPage() {
     refetchInterval: (q) => (q.state.data?.status === "done" ? false : 1000),
   });
   const [updated, setUpdated] = useState(0);
-  const [detailsOpen, setDetailsOpen] = useState(true);
   const [showChanges, setShowChanges] = useState(false);
   const { data: previous } = useQuery({ queryKey: ["inspection", insp?.previous_revision?.id, ...qk.all()], queryFn: () => api.inspection(insp?.previous_revision?.id ?? ""), enabled: !!insp?.previous_revision });
   const [sel, setSel] = useState<string | null>(null);
-  const [f, setF] = useState({ status: "all", ruleSet: "all", type: "all", deck: "all", q: "" });
+  const [f, setF] = useState({ status: "all", q: "" });
   const setData = (d: Inspection) => qc.setQueryData(key, d);
   const answers = useMutation({ mutationFn: (a: Parameters<typeof api.submitAnswers>[1]) => api.submitAnswers(id, a), onSuccess: (d) => { setData(d); setUpdated((v) => v + 1); toast.success("Checks updated with your measurement"); } });
   const review = useMutation({ mutationFn: (rid: string) => api.markReviewed(id, rid), onSuccess: setData });
@@ -87,15 +86,14 @@ function InspectionPage() {
       if (first) setSel(first.id);
     }
   }, [insp?.id, insp?.status]);
-  const selectResult = (rid: string) => { setSel(rid); setDetailsOpen(true); };
+  const selectResult = (rid: string) => setSel(rid);
   const rows = useMemo(() => {
     if (!insp) return [];
     const q = f.q.toLowerCase();
     return insp.results
       .filter((r) => {
         const el = insp.elements.find((e) => e.id === r.element_id);
-        return (f.status === "all" || (f.status === "REVIEW" ? r.needs_review : r.status === f.status)) &&
-          (f.ruleSet === "all" || r.rule_set === f.ruleSet) && (f.type === "all" || el?.type === f.type) && (f.deck === "all" || el?.space === f.deck) &&
+        return (f.status === "all" || r.status === f.status) &&
           (!q || [r.check_name, r.element_id, r.clause_ref, el?.name].join(" ").toLowerCase().includes(q));
       })
       .sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.element_id.localeCompare(b.element_id));
@@ -107,74 +105,57 @@ function InspectionPage() {
 
   const selected = insp.results.find((r) => r.id === sel) ?? null;
   const pdf = insp.files.find((x) => x.type === "application/pdf");
-  const uniq = (xs: string[]) => [...new Set(xs)];
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(insp, null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${insp.id}-report.json`; a.click();
   };
-  const selects = [
-    { k: "status", label: "Status", opts: [["all", "All statuses"], ["FAIL", "Violation"], ["UNKNOWN", "Cannot check"], ["PASS", "OK"]] },
-    { k: "ruleSet", label: "Rule set", opts: [["all", "All rule sets"], ...uniq(insp.results.map((r) => r.rule_set)).map((x) => [x, x])] },
-    { k: "type", label: "Element type", opts: [["all", "All elements"], ...uniq(insp.elements.map((e) => e.type)).map((x) => [x, x.charAt(0).toUpperCase() + x.slice(1)])] },
-    { k: "deck", label: "Space", opts: [["all", "All spaces"], ...uniq(insp.elements.map((e) => e.space)).map((x) => [x, `${x} · Deck 1`])] },
-  ] as const;
-
   return (
     <div>
-      <div className="no-print">
-        <InspectionStepper step={3} />
-        <PageHeader title={insp.name} sub={<>{insp.project} · <span className="font-mono">{insp.files.length} files</span></>}
-          actions={
+      <div className="inspection-result-page no-print">
+        <header className="inspection-result-header">
+          <div className="flex min-w-0 items-center justify-between gap-4">
+            <h1 className="min-w-0 text-2xl font-medium">{insp.name}</h1>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline"><Download className="h-4 w-4" />Download report</Button></DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="shrink-0"><Download className="h-4 w-4" />Download report</Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={exportJson}><FileJson className="h-4 w-4" />JSON</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => window.print()}><Printer className="h-4 w-4" />Printable report / PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          } />
-        <div className="space-y-4 p-8">
-          <StatCards results={insp.results} source={insp.name.replace(" accommodation", "")} updated={updated} />
-          <Tabs defaultValue="results">
-            <TabsList>
-              <TabsTrigger value="results">Findings</TabsTrigger>
-              <TabsTrigger value="missing">What we need from you <span className="ml-1.5 rounded bg-unknown-soft px-1.5 font-mono text-[10px] text-unknown">{insp.questions.length}</span></TabsTrigger>
-              <TabsTrigger value="measurements">Measurements</TabsTrigger>
-            </TabsList>
-            <TabsContent value="results" className="mt-3">
-              {insp.previous_revision && <label className="mb-4 flex items-center gap-2 text-xs"><Switch checked={showChanges} onCheckedChange={setShowChanges} aria-label={`Show changes since ${insp.previous_revision.label}`} />Show changes since {insp.previous_revision.label}</label>}
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                {selects.map((s) => (
-                  <select key={s.k} aria-label={s.label} value={f[s.k]} onChange={(e) => setF((v) => ({ ...v, [s.k]: e.target.value }))}
-                    className="h-8 rounded-md border bg-card px-2 text-sm">
-                    {s.opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
-                ))}
-                <div className="relative ml-auto w-64 max-w-full">
+          </div>
+          <StatCards results={insp.results} source={insp.name.replace(" accommodation", "")} updated={updated} activeStatus={f.status} onStatus={(status) => setF((v) => ({ ...v, status: v.status === status ? "all" : status }))} />
+        </header>
+        <Tabs defaultValue="results" className="inspection-result-tabs">
+          <TabsList className="h-9 shrink-0 justify-start rounded-none border-b bg-transparent p-0">
+            <TabsTrigger value="results" className="h-9 rounded-none px-4">Findings</TabsTrigger>
+            <TabsTrigger value="missing" className="h-9 rounded-none px-4">What we need from you <span className="ml-1.5 font-mono text-xs text-muted-foreground">{insp.questions.length}</span></TabsTrigger>
+            <TabsTrigger value="measurements" className="h-9 rounded-none px-4">Measurements</TabsTrigger>
+          </TabsList>
+          <TabsContent value="results" className="inspection-workspace mt-4 min-h-0 flex-1">
+            <div className="flex min-h-0 min-w-0 flex-col border-r bg-card">
+              <div className="flex h-12 shrink-0 items-center gap-2 border-b pr-3">
+                <div className="relative min-w-0 flex-1">
                   <Search className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
-                  <Input value={f.q} onChange={(e) => setF((v) => ({ ...v, q: e.target.value }))} placeholder="Search check, element, clause" className="h-8 pl-8" />
+                  <Input aria-label="Search findings" value={f.q} onChange={(e) => setF((v) => ({ ...v, q: e.target.value }))} placeholder="Search findings" className="h-8 pl-8 text-xs" />
                 </div>
+                {insp.previous_revision && <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground" title={`Show changes since ${insp.previous_revision.label}`}><Switch className="h-4 w-7 [&_span]:h-3 [&_span]:w-3 [&_span]:data-[state=checked]:translate-x-3" checked={showChanges} onCheckedChange={setShowChanges} aria-label={`Show changes since ${insp.previous_revision.label}`} />Changes since {insp.previous_revision.label}</label>}
               </div>
-              <div className="inspection-workspace grid items-start gap-8">
-                <ResultsTable results={rows} elements={insp.elements} selectedId={sel} onSelect={(r) => selectResult(r.id)} previous={previous?.results} showChanges={showChanges} />
-                <div className="relative min-w-0">
-                  <DrawingViewer elements={insp.elements} results={rows} selectedElementId={selected?.element_id ?? null}
-                    onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
-                    pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf?.name} />
-                  {selected && detailsOpen && <div className="evidence-overlay absolute right-0 top-12 z-10 h-[680px] w-[min(360px,100%)] overflow-hidden border-l border-b bg-card shadow-lg">
-                    <EvidenceChain key={selected.id} result={selected} element={insp.elements.find((e) => e.id === selected.element_id)}
-                      onClose={() => setDetailsOpen(false)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} />
-                  </div>}
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="missing" className="mt-3 max-w-4xl">
-              <p className="mb-3 text-sm text-muted-foreground">Provide these measurements to resolve the most checks first. Your values are recorded in the audit trail.</p>
-              <QuestionList questions={insp.questions} elements={insp.elements} busy={answers.isPending} onRecheck={(a) => answers.mutate(a)} />
-            </TabsContent>
-            <TabsContent value="measurements" className="mt-3"><MeasurementsTable elements={insp.elements} /></TabsContent>
-          </Tabs>
-        </div>
+              <div className="min-h-0 flex-1 overflow-y-auto"><ResultsTable results={rows} elements={insp.elements} selectedId={sel} onSelect={(r) => selectResult(r.id)} previous={previous?.results} showChanges={showChanges} expandPassed={f.status === "PASS"} /></div>
+            </div>
+            <div className="inspection-drawing-details">
+              <DrawingViewer elements={insp.elements} results={insp.results} selectedElementId={selected?.element_id ?? null}
+                onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
+                pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf?.name} />
+              <section aria-label="Finding details" className="min-h-0 overflow-hidden border-t bg-card">
+                {selected ? <EvidenceChain key={selected.id} result={selected} element={insp.elements.find((e) => e.id === selected.element_id)} onClose={() => setSel(null)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} /> : <div className="grid h-full place-items-center text-sm text-muted-foreground">Select a finding to see why</div>}
+              </section>
+            </div>
+          </TabsContent>
+          <TabsContent value="missing" className="mt-4 min-h-0 flex-1 overflow-y-auto">
+            <QuestionList questions={insp.questions} elements={insp.elements} busy={answers.isPending} onRecheck={(a) => answers.mutate(a)} />
+          </TabsContent>
+          <TabsContent value="measurements" className="mt-4 min-h-0 flex-1 overflow-y-auto"><MeasurementsTable elements={insp.elements} /></TabsContent>
+        </Tabs>
       </div>
       <PrintReport insp={insp} />
     </div>
