@@ -35,3 +35,4 @@ use the editor.
 - Keep finding titles and revision display comparisons in `src/lib/presentation.ts`; these format engine results without making compliance decisions.
 - JSON rule imports are validated and self-tested through `src/lib/api.ts`, remain proposals until engineer approval, and failing rules cannot be approved.
 - Revision comparisons use explicit previous-revision references; never invent changes from inspection names or counts.
+- Inspection results use a viewport-height workspace with independently scrolling findings and evidence, and a stacked drawing/detail grid; this prevents evidence from obscuring the drawing.
