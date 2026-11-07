@@ -7,15 +7,14 @@ export function MeasurementsTable({ elements }: { elements: ShipElement[] }) {
     <div className="overflow-hidden rounded-md border bg-card">
       <table className="w-full text-sm">
         <thead className="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-          <tr>{["Element", "Attribute", "Value", "Confidence", "Method", "Source", "Location", "Quote"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
+          <tr>{["Element", "Attribute", "Value", "Method", "Source", "Location", "Quote"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map(({ el, k, a, conflict }, i) => (
             <tr key={i} className="border-t align-top">
               <td className="px-3 py-2 font-mono text-xs">{el.id}</td>
-              <td className="px-3 py-2 font-mono text-xs">{k}{conflict && <span className="ml-1 rounded bg-review-soft px-1 text-[10px] text-review">conflict</span>}</td>
+              <td className="px-3 py-2 font-mono text-xs">{k}</td>
               <td className="px-3 py-2 text-right font-mono text-xs tnum">{a.value} {a.unit}</td>
-              <td className="px-3 py-2"><ConfidenceTag c={a.confidence} /></td>
               <td className="px-3 py-2 text-xs">{a.method}</td>
               <td className="max-w-[180px] truncate px-3 py-2 font-mono text-xs" title={a.source_file}>{a.source_file}</td>
               <td className="px-3 py-2 text-xs">{a.page ? `p.${a.page} · ` : ""}{a.section}</td>

@@ -58,13 +58,13 @@
 
 :root {
   --radius: 0.375rem;
-  --background: oklch(0.985 0.002 250);
+  --background: oklch(0.975 0.004 250);
   --foreground: oklch(0.22 0.02 255);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.22 0.02 255);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.02 255);
-  --primary: oklch(0.5 0.11 235);
+  --primary: oklch(0.42 0.14 255);
   --primary-foreground: oklch(0.98 0.005 235);
   --secondary: oklch(0.955 0.005 250);
   --secondary-foreground: oklch(0.28 0.02 255);
@@ -94,7 +94,7 @@
   --pass-soft: oklch(0.95 0.04 155);
   --fail: oklch(0.55 0.2 27);
   --fail-soft: oklch(0.95 0.035 27);
-  --unknown: oklch(0.62 0.14 70);
+  --unknown: oklch(0.49 0.12 65);
   --unknown-soft: oklch(0.96 0.05 85);
   --review: oklch(0.5 0.17 300);
   --review-soft: oklch(0.95 0.035 300);
@@ -166,4 +166,22 @@
   .no-print { display: none !important; }
   .print-only { display: block !important; }
   body { background: white; color: black; font-size: 10pt; }
+}
+
+.inspection-workspace { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+.coverage-bar { appearance: none; border: 0; background: var(--muted); }
+.coverage-bar::-webkit-progress-bar { background: var(--muted); }
+.coverage-bar::-webkit-progress-value { background: var(--primary); }
+.coverage-bar::-moz-progress-bar { background: var(--primary); }
+@keyframes verdict-flash { from { background: var(--accent); } to { background: var(--card); } }
+.verdict-updated { animation: verdict-flash 1.2s ease-out; }
+@keyframes evidence-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+.evidence-overlay { animation: evidence-in 180ms ease-out; box-shadow: -8px 8px 24px color-mix(in oklab, var(--foreground) 10%, transparent); }
+.finding-row:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+@media (max-width: 1000px) {
+  .inspection-workspace { grid-template-columns: minmax(0, 1fr); }
+  .evidence-overlay { position: relative; top: auto; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bbox-selected, .verdict-updated, .evidence-overlay { animation: none; }
 }
