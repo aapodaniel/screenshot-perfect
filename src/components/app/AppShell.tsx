@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpenCheck, ClipboardCheck, PanelLeftClose, PanelLeftOpen, Settings2 } from "lucide-react";
+import { BookOpenCheck, ClipboardCheck, History, PanelLeftClose, PanelLeftOpen, Settings2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -8,8 +8,9 @@ import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Inspections", icon: ClipboardCheck, match: (p: string) => p === "/" || p.startsWith("/inspections") },
-  { to: "/rules", label: "Rule library", icon: BookOpenCheck, match: (p: string) => p.startsWith("/rules") },
+  { to: "/", label: "Check design", icon: ClipboardCheck, match: (p: string) => p === "/" || p.startsWith("/inspections") },
+  { to: "/history", label: "History", icon: History, match: (p: string) => p === "/history" },
+  { to: "/rules", label: "Rules", icon: BookOpenCheck, match: (p: string) => p.startsWith("/rules") },
   { to: "/settings", label: "Settings", icon: Settings2, match: (p: string) => p.startsWith("/settings") },
 ] as const;
 
@@ -39,7 +40,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="grid h-7 w-7 shrink-0 place-items-center rounded bg-primary font-mono text-xs font-bold text-primary-foreground">P</div>
           {!collapsed && <span className="text-xl font-medium">ProvenAI</span>}
         </div>
-        {!collapsed && path === "/" && <p className="px-4 py-4 text-xs leading-relaxed text-muted-foreground">The engineer designs. ProvenAI checks the rules, proves every result, and says what it cannot check.</p>}
         <nav className="flex-1 space-y-0.5 p-2">
           {nav.map((n) => {
             const active = n.match(path);
