@@ -28,8 +28,8 @@ export function evaluate(rule: Rule, attr: Attr | undefined, elementName: string
       needs_review: false,
       measured: null,
       confidence: null,
-      reason: `No evidence found for ${c.label.toLowerCase()} in any source document. The check cannot be decided.`,
-      recommendation: `Provide ${c.label.toLowerCase()} for ${elementName}. Requested from: ${rule.missing_owner}.`,
+      reason: `No ${c.label.toLowerCase()} measurement was found in the source documents.`,
+      recommendation: `Provide ${c.label.toLowerCase()} for ${elementName}.`,
       missing: [c.attr],
       evidence: [],
     };
@@ -46,7 +46,7 @@ export function evaluate(rule: Rule, attr: Attr | undefined, elementName: string
       confidence: attr.confidence,
       reason: `Sources disagree: ${all.map((e) => `${fmt(e.value as number)} ${e.unit} (${e.source_file})`).join(" vs ")}. The tool does not pick one.`,
       recommendation: `Confirm the correct ${c.label.toLowerCase()} with ${rule.missing_owner} and supersede the outdated document, then re-check.`,
-      missing: [],
+      missing: [c.attr],
       evidence,
     };
   }
@@ -56,14 +56,14 @@ export function evaluate(rule: Rule, attr: Attr | undefined, elementName: string
   const sym = ok ? (v === c.value ? "=" : c.op === ">=" ? ">" : "<") : c.op === ">=" ? "<" : ">";
   const lowConf = attr.confidence === "low";
   const reason = ok
-    ? `${fmt(v)} ${c.unit} ${sym} ${fmt(c.value)} ${c.unit}: ${v === c.value ? "meets the limit exactly" : `${fmt(diff)} ${c.unit} margin`}.`
-    : `${fmt(v)} ${c.unit} ${sym} ${fmt(c.value)} ${c.unit}: ${fmt(diff)} ${c.unit} ${c.deficit}.`;
+    ? `${fmt(v)} ${c.unit} ${v === c.value ? "meets" : c.op === ">=" ? "is above" : "is below"} the required ${fmt(c.value)} ${c.unit} limit${v === c.value ? " exactly" : ` by ${fmt(diff)} ${c.unit}`}.
+    : `${fmt(v)} ${c.unit} is ${fmt(diff)} ${c.unit} ${c.op === ">=" ? "less" : "more"} than the required ${fmt(c.value)} ${c.unit}.`;
   return {
     status: ok ? "PASS" : "FAIL",
     needs_review: lowConf,
     measured: v,
     confidence: attr.confidence,
-    reason: lowConf ? `${reason} Evidence confidence is low — verify before acting.` : reason,
+    reason,
     recommendation: ok
       ? "No action required."
       : rule.recommend_fail.replace("{element}", elementName).replace("{diff}", `${fmt(diff)} ${c.unit}`),

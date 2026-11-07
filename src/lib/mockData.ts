@@ -19,11 +19,11 @@ const baseRules: Omit<Rule, "tests">[] = [
   {
     id: "ADA-404.2.3", rule_set_id: "ada-doors", rule_set: "ADA – Doors", name: "Door clear width",
     clause_ref: "ADA 2010 §404.2.3",
-    clause_text: "Door openings shall provide a clear width of 32 inches (815 mm) minimum. Clear openings of doorways with swinging doors shall be measured between the face of the door and the stop, with the door open 90 degrees.",
+    clause_text: "Door openings shall provide a clear width of 32 inches (812.8 mm, rounded to 813 mm) minimum. Clear openings of doorways with swinging doors shall be measured between the face of the door and the stop, with the door open 90 degrees.",
     applies_to: "door",
-    condition: { attr: "clear_width_mm", label: "Clear width", op: ">=", value: 815, unit: "mm", deficit: "too narrow" },
+    condition: { attr: "clear_width_mm", label: "Clear width", op: ">=", value: 813, unit: "mm", deficit: "too narrow" },
     required_inputs: ["clear_width_mm"],
-    recommend_fail: "Increase the clear opening of {element} by at least {diff} (e.g. 900 mm leaf with offset hinges) and update the door schedule.",
+    recommend_fail: "Widen {element} by at least {diff}.",
     missing_owner: "Outfitting / door supplier", status: "approved",
   },
   {
@@ -110,11 +110,11 @@ function demoElements(): ShipElement[] {
     },
     {
       id: "D-01-36-1", type: "door", name: "Door D-01-36-1", space: "01-36-1", deck: "Deck 1", page: 10, bbox: [445, 455, 495, 485],
-      attrs: { clear_width_mm: a(700, "mm", "high", "Door leaf 700 between stop and leaf face", GA, 10, "Frame 38, corridor side", "Vector measurement") },
+      attrs: { clear_width_mm: a(790, "mm", "low", "D-01-36-1 CLR 790 (smudged scan)", GA, 10, "Frame 38, corridor side", "Vector measurement") },
     },
     {
       id: "D-01-36-2", type: "door", name: "Door D-01-36-2", space: "01-36-2", deck: "Deck 1", page: 10, bbox: [625, 455, 675, 485],
-      attrs: { clear_width_mm: a(790, "mm", "low", "D-01-36-2 CLR 79O (smudged scan)", GA, 10, "Door tag at frame 43", "OCR") },
+      attrs: { clear_width_mm: a(700, "mm", "high", "Door clear opening 700 between stop and leaf face", GA, 10, "Door tag at frame 43", "OCR") },
     },
     {
       id: "D-01-36-3", type: "door", name: "Door D-01-36-3", space: "01-36-3", deck: "Deck 1", page: 10, bbox: [815, 455, 885, 485], accessible: true,
@@ -170,8 +170,9 @@ function evaluateAll(insp: Stored) {
     });
   }
   const qmap = new Map<string, Question>();
-  for (const res of results) for (const m of res.missing) {
-    const rule = rules.find((r) => r.id === res.check_id)!;
+  for (const res of results) for (const m of res.missing.length ? res.missing : res.status === "UNKNOWN" ? res.required_inputs : []) {
+    const rule = rules.find((r) => r.id === res.check_id);
+    if (!rule) continue;
     const q = qmap.get(m) ?? { attr: m, label: rule.condition.label, unit: rule.condition.unit, owner: rule.missing_owner, resolves_count: 0, element_ids: [], check_ids: [] };
     q.resolves_count++; if (!q.element_ids.includes(res.element_id)) q.element_ids.push(res.element_id); q.check_ids.push(res.id);
     qmap.set(m, q);
@@ -201,10 +202,14 @@ function seed() {
   };
   mk("rv60-rev-b", "GA Deck 1 accommodation — rev B", 21, (els) => {
     els.forEach((e) => { if (e.attrs["headroom_mm"]) delete e.attrs["headroom_mm"].conflicts; });
-    els.find((e) => e.id === "D-01-36-3")!.attrs["clear_width_mm"]!.value = 760;
+    const door = els.find((e) => e.id === "D-01-36-3");
+    if (door?.attrs["clear_width_mm"]) door.attrs["clear_width_mm"].value = 760;
   });
   mk("rv60-rev-c", "GA Deck 1 accommodation — rev C", 9, (els) => { els.forEach((e) => { if (e.attrs["headroom_mm"]) delete e.attrs["headroom_mm"].conflicts; }); });
   mk(DEMO_ID, "GA Deck 1 accommodation — rev D", 0.2);
+  const c = store.get("rv60-rev-c"), d = store.get(DEMO_ID);
+  if (c) c.previous_revision = { id: "rv60-rev-b", label: "rev B" };
+  if (d) d.previous_revision = { id: "rv60-rev-c", label: "rev C" };
 }
 export const DEMO_ID = "rv60-rev-d";
 
@@ -222,6 +227,11 @@ export async function listInspections(): Promise<InspectionSummary[]> {
     .sort((x, y) => y.created_at.localeCompare(x.created_at))
     .map((s) => ({
       id: s.id, name: s.name, created_at: s.created_at, file_count: s.files.length, status: s.status,
+      changes: s.previous_revision ? {
+        previous_label: s.previous_revision.label,
+        new_violations: s.results.filter((r) => r.status === "FAIL" && store.get(s.previous_revision?.id ?? "")?.results.find((old) => old.id === r.id)?.status !== "FAIL").length,
+        fixed: s.results.filter((r) => r.status !== "FAIL" && store.get(s.previous_revision?.id ?? "")?.results.find((old) => old.id === r.id)?.status === "FAIL").length,
+      } : undefined,
       counts: {
         pass: s.results.filter((r) => r.status === "PASS").length,
         fail: s.results.filter((r) => r.status === "FAIL").length,
@@ -266,12 +276,12 @@ export async function submitAnswers(id: string, answers: Answer[]) {
 
 function rv(s: Stored, rid: string) { return (s._reviews[rid] ??= { notes: [], extra: [] }); }
 export async function markReviewed(id: string, rid: string) {
-  const s = store.get(id)!; const r = rv(s, rid);
+  const s = store.get(id); if (!s) throw new Error("Inspection not found"); const r = rv(s, rid);
   r.reviewed = true; r.extra.push({ at: new Date().toISOString(), actor: "engineer", event: "Marked as reviewed" });
   evaluateAll(s); return strip(s);
 }
 export async function addNote(id: string, rid: string, note: string) {
-  const s = store.get(id)!; const r = rv(s, rid);
+  const s = store.get(id); if (!s) throw new Error("Inspection not found"); const r = rv(s, rid);
   r.notes.push(note); r.extra.push({ at: new Date().toISOString(), actor: "engineer", event: `Note: ${note}` });
   evaluateAll(s); return strip(s);
 }
@@ -280,7 +290,8 @@ export async function proposeRule(input: { text: string; clause_ref: string; rul
   await delay(500);
   const cond = translateClause(input.text);
   if (!cond) return { ok: false as const, error: "No measurable threshold with a comparison (minimum / maximum) was found in the text. Nothing was proposed." };
-  const rs = ruleSets.find((r) => r.id === input.rule_set_id) ?? ruleSets[0]!;
+  const rs = ruleSets.find((r) => r.id === input.rule_set_id);
+  if (!rs) return { ok: false as const, error: "Choose a rule pack before proposing a check." };
   const draft: Rule = {
     id: `${(rs.authority.split(" ")[0] ?? "RULE").toUpperCase()}-${input.clause_ref.replace(/[^\w.]+/g, "").slice(-12) || Date.now().toString(36)}`,
     rule_set_id: rs.id, rule_set: rs.name, name: input.name || cond.label, clause_ref: input.clause_ref, clause_text: input.text.trim(),
@@ -292,6 +303,8 @@ export async function proposeRule(input: { text: string; clause_ref: string; rul
 }
 export async function approveRule(rule: Rule) {
   await delay(200);
-  rules = [...rules.filter((r) => r.id !== rule.id), { ...rule, status: "approved" }];
+  const tested = { ...rule, tests: runTests(rule) };
+  if (!tested.tests.length || tested.tests.some((t) => !t.passed)) throw new Error("Rule locked: every self-test must pass before approval.");
+  rules = [...rules.filter((r) => r.id !== rule.id), { ...tested, status: "approved" }];
   return clone(rule);
 }

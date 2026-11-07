@@ -7,12 +7,14 @@ const ev = (value: number, extra: Partial<Attr> = {}): Attr => ({ value, unit: "
 
 describe("rules engine", async () => {
   const rules = await listRules();
-  const width = rules.find((r) => r.id === "ADA-404.2.3")!;
-  it("door 815 mm against ≥ 815 passes at the exact boundary", () => expect(evaluate(width, ev(815), "d").status).toBe("PASS"));
-  it("door 700 mm fails ADA 404.2.3, 115 mm too narrow", () => {
+  const width = rules.find((r) => r.id === "ADA-404.2.3");
+  if (!width) throw new Error("ADA door rule is missing");
+  it("door 813 mm against ≥ 813 passes at the exact boundary", () => expect(evaluate(width, ev(813), "d").status).toBe("PASS"));
+  it("door 700 mm fails ADA 404.2.3, 113 mm below the limit", () => {
     const r = evaluate(width, ev(700), "d");
-    expect(r.status).toBe("FAIL"); expect(r.reason).toContain("115 mm too narrow");
+    expect(r.status).toBe("FAIL"); expect(r.reason).toContain("113 mm less than the required 813 mm");
   });
+  it("812 mm fails the 813 mm ADA limit", () => expect(evaluate(width, ev(812), "d").status).toBe("FAIL"));
   it("missing evidence is UNKNOWN, never guessed", () => expect(evaluate(width, undefined, "d").status).toBe("UNKNOWN"));
   it("contradictory sources are UNKNOWN and flagged for review", () => {
     const r = evaluate(width, ev(900, { conflicts: [ev(800)] }), "d");
