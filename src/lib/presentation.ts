@@ -33,3 +33,15 @@ export function revisionChange(result: Result, previous: Result[]): "New" | "Fix
   if (result.status !== "FAIL" && old?.status === "FAIL") return "Fixed";
   return "Unchanged";
 }
+/** Terse checker notes format existing decisions, never decide compliance. */
+export function checkerMeasurement(r: Result): string {
+  if (r.status === "UNKNOWN") return r.evidence.length > 1 ? "CONFLICTING SOURCES" : "MEASUREMENT REQUIRED";
+  return `${r.measured} ${r.status === "FAIL" ? (r.condition.includes("<=") ? ">" : "<") : " / "} ${r.required} ${r.unit}`;
+}
+export function checkerFix(r: Result): string {
+  if (r.status === "FAIL" && r.required_inputs[0] === "clear_width_mm" && r.measured !== null) {
+    const minimum = Number(r.required.replace(/[^\d.]/g, ""));
+    if (Number.isFinite(minimum)) return `Widen ≥ ${minimum - r.measured} mm`;
+  }
+  return r.recommendation;
+}
