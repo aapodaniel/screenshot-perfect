@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { FlaskConical, Plus } from "lucide-react";
+import { CheckCircle2, CircleHelp, FlaskConical, Plus, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/AppShell";
 import { api, DEMO_ID, qk } from "@/lib/api";
@@ -26,19 +26,19 @@ function Inspections() {
   const { data, isLoading } = useQuery({ queryKey: ["inspections", ...qk.all()], queryFn: api.inspections, refetchInterval: 3000 });
   return (
     <div>
-      <PageHeader title="Inspections" sub="Each inspection checks uploaded design documents against selected rule sets."
+      <PageHeader title="Inspections" sub="Check a design. See what breaks the rules — and the evidence behind it."
         actions={<>
           <Button variant="outline" onClick={() => nav({ to: "/inspections/$id", params: { id: DEMO_ID } })}><FlaskConical className="h-4 w-4" />Load demo inspection</Button>
           <Button size="lg" asChild><Link to="/inspections/new"><Plus className="h-4 w-4" />New inspection</Link></Button>
         </>} />
-      <div className="p-6">
-        <div className="overflow-hidden rounded-md border bg-card">
+      <div className="p-8">
+        <div className="overflow-x-auto rounded-md border bg-card">
           <table className="w-full text-sm">
             <thead className="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th><th className="px-4 py-2 font-medium">Date</th><th className="px-4 py-2 text-right font-medium">Files</th>
-                <th className="px-4 py-2 text-right font-medium text-pass">Pass</th><th className="px-4 py-2 text-right font-medium text-fail">Fail</th>
-                <th className="px-4 py-2 text-right font-medium text-unknown">Unknown</th><th className="px-4 py-2 text-right font-medium text-review">Review</th>
+                <th className="px-4 py-2 text-right font-medium text-pass"><span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />OK</span></th><th className="px-4 py-2 text-right font-medium text-fail"><span className="inline-flex items-center gap-1"><XCircle className="h-3 w-3" />Violation</span></th>
+                <th className="px-4 py-2 text-right font-medium text-unknown"><span className="inline-flex items-center gap-1"><CircleHelp className="h-3 w-3" />Cannot check</span></th><th className="px-4 py-2 font-medium">Change vs. previous revision</th>
                 <th className="px-4 py-2 font-medium">Status</th>
               </tr>
             </thead>
@@ -46,18 +46,19 @@ function Inspections() {
               {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading inspections…</td></tr>}
               {data?.map((i) => (
                 <tr key={i.id} className="cursor-pointer border-t hover:bg-muted/50" onClick={() => nav({ to: "/inspections/$id", params: { id: i.id } })}>
-                  <td className="px-4 py-2.5 font-medium">{i.name}<div className="font-mono text-[11px] text-muted-foreground">{i.id}</div></td>
+                  <td className="px-4 py-2.5 font-medium"><Link to="/inspections/$id" params={{ id: i.id }} className="focus-visible:outline-2 focus-visible:outline-ring">{i.name}</Link><div className="font-mono text-[11px] text-muted-foreground">{i.id}</div></td>
                   <td className="px-4 py-2.5 font-mono text-xs tnum">{new Date(i.created_at).toISOString().slice(0, 16).replace("T", " ")}</td>
                   <td className="px-4 py-2.5 text-right font-mono tnum">{i.file_count}</td>
                   <td className="px-4 py-2.5 text-right font-mono tnum">{i.status === "done" ? i.counts.pass : "–"}</td>
                   <td className="px-4 py-2.5 text-right font-mono tnum">{i.status === "done" ? i.counts.fail : "–"}</td>
                   <td className="px-4 py-2.5 text-right font-mono tnum">{i.status === "done" ? i.counts.unknown : "–"}</td>
-                  <td className="px-4 py-2.5 text-right font-mono tnum">{i.status === "done" ? i.counts.review : "–"}</td>
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground">{i.changes ? `+${i.changes.new_violations} new violation${i.changes.new_violations === 1 ? "" : "s"}, ${i.changes.fixed} fixed` : "First revision"}</td>
                   <td className="px-4 py-2.5 text-xs">
                     <span className={i.status === "done" ? "text-muted-foreground" : "font-medium text-primary"}>{i.status === "done" ? "Complete" : i.status === "error" ? "Error" : "Running…"}</span>
                   </td>
                 </tr>
               ))}
+              {!isLoading && !data?.length && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Load the demo inspection or start a new inspection to see results.</td></tr>}
             </tbody>
           </table>
         </div>

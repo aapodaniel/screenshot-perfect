@@ -1,5 +1,6 @@
 // All API calls. Live mode talks to the on-premise REST API; demo mode (or any network error) uses src/lib/mockData.ts.
 import { toast } from "sonner";
+import { runTests } from "./rulesEngine";
 import * as mock from "./mockData";
 import { getSettings } from "./settings";
 import type { Answer, Inspection, InspectionSummary, Rule, RuleSet } from "./types";
@@ -67,3 +68,20 @@ export const api = {
 export const qk = {
   all: () => [getSettings().demo, getSettings().apiUrl] as const,
 };
+
+/** Import full Rule objects as proposals; imported approval claims are never trusted. */
+export function parseRulePack(input: unknown): Rule[] {
+  const rows = Array.isArray(input) ? input : input && typeof input === "object" && "rules" in input ? input.rules : null;
+  if (!Array.isArray(rows) || !rows.length) throw new Error("Choose a JSON array of rules or an object with a rules array.");
+  const ids = new Set<string>();
+  return rows.map((row: unknown) => {
+    if (!row || typeof row !== "object") throw new Error("Every rule must be an object.");
+    const r = row as Rule;
+    const strings = [r.id, r.rule_set_id, r.rule_set, r.name, r.clause_ref, r.clause_text, r.recommend_fail, r.missing_owner];
+    if (strings.some((v) => typeof v !== "string" || !v.trim()) || !["door", "cabin", "corridor"].includes(r.applies_to) || !r.condition || ![">=", "<="].includes(r.condition.op) || !Number.isFinite(r.condition.value) || [r.condition.attr, r.condition.label, r.condition.unit, r.condition.deficit].some((v) => typeof v !== "string" || !v) || !Array.isArray(r.required_inputs) || !r.required_inputs.every((v) => typeof v === "string") || !r.required_inputs.includes(r.condition.attr) || !Array.isArray(r.tests) || !r.tests.length || r.tests.some((t) => !t || typeof t.name !== "string" || !["PASS", "FAIL", "UNKNOWN"].includes(t.expected) || !(t.input === null || t.input === "conflict" || typeof t.input === "number" && Number.isFinite(t.input)))) throw new Error("A rule is incomplete. Include its title, clause, condition, inputs and self-tests.");
+    if (ids.has(r.id)) throw new Error("Each imported rule needs a unique ID.");
+    ids.add(r.id);
+    const draft: Rule = { ...r, status: "proposed" };
+    return { ...draft, tests: runTests(draft) };
+  });
+}
