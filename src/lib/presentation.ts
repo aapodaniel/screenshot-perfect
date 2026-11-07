@@ -46,3 +46,22 @@ export function checkerFix(r: Result): string {
   if (r.status === "UNKNOWN") return r.evidence.length > 1 ? "Verify current source measurement" : `Provide ${r.check_name.toLowerCase()} (${r.unit})`;
   return r.recommendation;
 }
+
+export function verifiedMeasurement(r: Result): string {
+  return `${r.measured} ${r.condition.includes('<=') || r.condition.includes('≤') ? '≤' : '≥'} ${r.required.replace(/[≥≤<> =]/g, '')} ${r.unit}`;
+}
+
+/** Report aggregation uses existing engine verdicts and explicit revisions only. */
+export function reportCounts(results: Result[]) {
+  return { checked: results.length, ok: results.filter(r => r.status === 'PASS').length, nonconform: results.filter(r => r.status === 'FAIL').length, unverified: results.filter(r => r.status === 'UNKNOWN').length };
+}
+export function reportChanges(results: Result[], previous?: Result[]) {
+  if (!previous) return null;
+  return { fixed: results.filter(r => revisionChange(r, previous) === 'Fixed').length, new: results.filter(r => revisionChange(r, previous) === 'New').length };
+}
+export function ruleSection(rule: { clause_ref: string; rule_set_id: string }): string {
+  if (rule.rule_set_id.startsWith('dnv')) return 'ACCOMMODATION · DEMO PLACEHOLDER';
+  const clause = rule.clause_ref.match(/§(\d+)/)?.[1];
+  const names: Record<string, string> = { '404': 'DOORS, DOORWAYS AND GATES', '304': 'TURNING SPACE', '309': 'OPERABLE PARTS' };
+  return clause ? `${clause} ${names[clause] ?? 'REQUIREMENTS'}` : 'GENERAL REQUIREMENTS';
+}

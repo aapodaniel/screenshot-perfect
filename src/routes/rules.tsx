@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { CheckCircle2, Plus, Upload, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/app/AppShell";
 import { StatusBadge } from "@/components/app/Status";
 import { api, parseRulePack, qk, type Rule } from "@/lib/api";
 import { formatCondition } from "@/lib/rulesEngine";
+import { ruleSection } from "@/lib/presentation";
+import { DEMO_ID } from "@/lib/api";
+import { useCheckedDrawings } from "@/lib/checkerSession";
 import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/rules")({
@@ -123,6 +126,9 @@ function Rules() {
   const { data } = useQuery({ queryKey: ["rules", ...qk.all()], queryFn: api.rules });
   const { data: packs } = useQuery({ queryKey: ["rulesets", ...qk.all()], queryFn: api.ruleSets });
   const [open, setOpen] = useState<Rule | null>(null);
+  const checks = useCheckedDrawings();
+  const latestId = checks.at(-1)?.inspection.id ?? DEMO_ID;
+  const { data: latest } = useQuery({ queryKey:['inspection',latestId,...qk.all()], queryFn:()=>api.inspection(latestId) });
   const [adding, setAdding] = useState(false);
   const [imported, setImported] = useState<Rule[]>([]);
   const input = useRef<HTMLInputElement>(null);
@@ -139,37 +145,14 @@ function Rules() {
       <PageHeader title="Rules"
         actions={<><Button variant="outline" onClick={() => input.current?.click()}>Import rules</Button><Button onClick={() => setAdding(true)}>Add rule</Button></>} />
       <input ref={input} type="file" accept=".json,application/json" hidden onChange={async (e) => { const file = e.target.files?.[0]; e.target.value = ""; if (!file) return; try { setImported(parseRulePack(JSON.parse(await file.text()))); } catch (err) { toast.error((err as Error).message); } }} />
-      <div className="p-8">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-              <tr>{["Rule", "Clause", "Condition", "Inputs", "Self-test"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {[...(data ?? [])].sort((a, b) => a.rule_set.localeCompare(b.rule_set)).map((r, index, all) => {
-                const ok = r.tests.filter((t) => t.passed).length;
-                return (
-                  <Fragment key={r.id}>{(index === 0 || all[index - 1]?.rule_set !== r.rule_set) && <tr className="border-t bg-muted"><th colSpan={5} className="px-4 py-2 text-left font-medium">{r.rule_set}</th></tr>}<tr className="cursor-pointer border-t hover:bg-muted/50" onClick={() => setOpen(r)}>
-                    <td className="px-4 py-2 text-sm font-medium">{r.name}<div className="font-mono text-xs font-normal text-muted-foreground">{r.id}</div></td>
-                    <td className="px-3 py-2 text-xs">{r.clause_ref}<div className="text-muted-foreground">{r.name}</div></td>
-                    
-                    <td className="px-3 py-2 font-mono text-xs">{formatCondition(r)} {r.condition.unit}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{r.required_inputs.join(", ")}</td>
-                    <td className="px-3 py-2 text-xs"><span className={ok === r.tests.length ? "inline-flex items-center gap-1 text-pass" : "inline-flex items-center gap-1 text-fail"}>
-                      {ok === r.tests.length ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}<span className="font-mono tnum">{ok === r.tests.length && ok > 0 ? `${ok}/${r.tests.length} tests pass` : `${r.tests.length - ok} test fails — rule locked`}</span></span></td>
-                  </tr></Fragment>
-                );
-              })}
-              {packs?.filter((pack) => !data?.some((r) => r.rule_set_id === pack.id)).map((pack) => <tr key={pack.id} className="border-t"><td colSpan={5} className="px-4 py-2"><span className="font-medium">{pack.name}</span><p className="mt-2 text-xs text-muted-foreground">No approved rules yet. Import rules or add a rule for engineer approval.</p></td></tr>)}
-            </tbody>
-          </table>
-        </div>
+      <div className="rules-workspace">
+        <nav className="rules-tree" aria-label="Regulation contents">{[...(packs ?? [])].sort((a,b)=>['ada-doors','pvag-acc','colreg-annex-i','load-line-reg-12','dnv-acc'].indexOf(a.id)-['ada-doors','pvag-acc','colreg-annex-i','load-line-reg-12','dnv-acc'].indexOf(b.id)).map(pack=>{
+          const rules=(data??[]).filter(r=>r.rule_set_id===pack.id), tests=rules.flatMap(r=>r.tests);
+          const sections=[...new Set(rules.map(ruleSection))];
+          return <details key={pack.id}><summary><strong>{pack.id==='ada-doors'?'ADA 2010 STANDARDS':pack.name.toUpperCase()}</strong> · {rules.length} rules · {tests.filter(t=>t.passed).length}/{tests.length} self-tests pass<span className="tree-source">SOURCE {pack.authority} · EDITION {pack.id==='ada-doors'?'2010':'not supplied'} · {pack.id.startsWith('dnv')?'DEMO PLACEHOLDER · not yet loaded':rules.length?'EXCERPTS · full text not loaded':'NOT YET LOADED'}</span></summary>{sections.map(section=><details className="rule-section" key={section}><summary>{section} · {rules.filter(r=>ruleSection(r)===section).length} rules</summary>{rules.filter(r=>ruleSection(r)===section).map(r=><Button key={r.id} className="rule-tree-leaf" variant="ghost" aria-pressed={open?.id===r.id} onClick={()=>setOpen(r)}>{r.clause_ref} · {r.name} · {formatCondition(r)} · {r.tests.filter(t=>t.passed).length}/{r.tests.length} tests · {r.status}</Button>)}</details>)}{!rules.length&&<p className="p-2 text-xs">Not yet loaded. Import an approved regulation excerpt.</p>}</details>;
+        })}</nav>
+        <section className="rule-detail"><header className="properties-heading">RULE PROPERTIES</header>{open ? <div className="p-4"><h2 className="mb-3 font-mono text-sm">{open.id} · {open.name}</h2><RuleBody rule={open}/><h3 className="notes-ruled-heading mt-4">APPLIED IN LATEST CHECK · {latest?.name}</h3><table className="w-full text-xs"><thead><tr><th>ELEMENT</th><th>MEASURED</th><th>RESULT</th><th>PAGE / SOURCE</th></tr></thead><tbody>{latest?.results.filter(r=>r.check_id===open.id).map(r=><tr key={r.id}><td>{r.element_id}</td><td>{r.measured??'—'} {r.unit}</td><td><StatusBadge status={r.status}/></td><td>{r.evidence.map(e=>`${e.source_file}${e.page?` p.${e.page}`:''}`).join('; ')||'Evidence missing'}</td></tr>)}</tbody></table><p className="mt-3 text-xs text-muted-foreground">Clause page reference not supplied in this rule pack.</p></div> : <p className="p-4 text-sm">Select a rule.</p>}</section>
       </div>
-      <Sheet open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <SheetContent className="w-[520px] overflow-y-auto sm:max-w-[520px]">
-          {open && <><SheetHeader><SheetTitle className="font-mono">{open.id}</SheetTitle><p className="text-sm text-muted-foreground">{open.rule_set} · {open.name}</p></SheetHeader><div className="mt-4 px-4"><RuleBody rule={open} /></div></>}
-        </SheetContent>
-      </Sheet>
       <Dialog open={!!imported.length} onOpenChange={(o) => { if (!o) setImported([]); }}><DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Review imported rules</DialogTitle><DialogDescription>Rules stay locked until all tests pass and an engineer approves them.</DialogDescription></DialogHeader>{imported.map((r) => <section key={r.id} className="border-t py-2"><h2 className="mb-4 text-xl font-medium">{r.name}</h2><RuleBody rule={r} /></section>)}<Button variant="outline" disabled={importBusy || imported.some((r) => r.tests.some((t) => !t.passed))} onClick={approvePack}><ShieldCheck className="h-4 w-4" />Approve rules</Button></DialogContent></Dialog>
       <AddRule open={adding} onOpenChange={setAdding} />
     </div>

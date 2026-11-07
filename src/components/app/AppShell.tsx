@@ -10,7 +10,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <header className="checker-menu no-print">
       <Link to="/" className="checker-brand">PROVENAI</Link>
       <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">File</Button></DropdownMenuTrigger><DropdownMenuContent>
-        <DropdownMenuItem asChild><Link to="/inspections/new">Open drawing / New inspection</Link></DropdownMenuItem>
+        <DropdownMenuItem asChild><Link to="/" onClick={() => workspaceCommand('load')}>Load drawing</Link></DropdownMenuItem>
+        <DropdownMenuItem asChild><Link to="/inspections/new">New inspection</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link to="/history">Inspection history</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
       </DropdownMenuContent></DropdownMenu>
@@ -19,8 +20,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </DropdownMenuContent></DropdownMenu>
       <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">Check</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onClick={() => workspaceCommand('run')}>Run check</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       <Button variant="ghost" asChild><Link to="/rules">Rules</Link></Button>
-      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">Report</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onClick={() => workspaceCommand('json')}>Export JSON</DropdownMenuItem><DropdownMenuItem onClick={() => window.print()}>Print / Save PDF</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-      <span className="checker-document">6096-070-001 GA · REV J · DECK 01</span>
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">Report</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem asChild><Link to="/report">Daily report</Link></DropdownMenuItem><DropdownMenuItem onClick={() => workspaceCommand('json')}>Export JSON</DropdownMenuItem><DropdownMenuItem onClick={() => window.print()}>Print / Save PDF</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
     </header>
     <main>{children}</main>
   </div>;
