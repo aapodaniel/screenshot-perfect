@@ -30,14 +30,13 @@ function DesignCheck() {
   }, [checking, navigate]);
   return <div className="design-home">
     <header className="space-y-3">
-      <p className="text-sm font-medium text-primary">ProvenAI · Ship design checking</p>
-      <h1 className="max-w-3xl text-[32px] font-medium leading-tight">Check a ship design against the rules — in one click.</h1>
-      <p className="max-w-3xl text-base leading-6 text-muted-foreground">ProvenAI finds violations, shows where they are in the drawing, and tells you what it cannot check.</p>
+      <h1 className="text-2xl font-semibold leading-tight">Check a ship design against the rules.</h1>
+      <p className="max-w-3xl text-sm leading-5 text-muted-foreground">ProvenAI finds violations, shows where they are in the drawing, and tells you what it cannot check.</p>
     </header>
     <div className="relative mt-6 flex min-h-0 flex-1 flex-col overflow-hidden border bg-card">
       {inspection ? <DrawingViewer elements={inspection.elements} results={phase >= 3 ? inspection.results : []} markerLimit={phase >= 3 ? phase - 2 : 0} selectedElementId={null} onSelectElement={() => {}} pdfUrl={null} fileName="Deck 01 · Cabins · Demo drawing" /> : <div className="grid flex-1 place-items-center text-muted-foreground">Loading drawing…</div>}
-      <div className="absolute inset-x-0 bottom-8 flex justify-center px-4">
-        {checking ? <div role="status" className="flex max-w-full flex-wrap items-center justify-center gap-3 border bg-card px-5 py-4 text-sm"><Loader2 className="h-4 w-4 animate-spin text-primary" /><span>{phase === 0 ? "Reading drawing…" : phase === 1 ? "Finding doors and cabins…" : "Checking 14 rules…"}</span></div> : <Button size="lg" className="h-14 px-8 text-base" disabled={!inspection} onClick={() => { setPhase(0); setChecking(true); }}><ScanLine className="h-5 w-5" />Check this design<ArrowRight className="h-5 w-5" /></Button>}
+      <div className="absolute left-4 bottom-4 flex px-0">
+        {checking ? <div role="status" className="flex h-8 max-w-full items-center gap-2 border bg-card px-3 text-xs"><Loader2 className="h-4 w-4 animate-spin text-primary" /><span>{phase === 0 ? "Reading drawing…" : phase === 1 ? "Finding doors and cabins…" : "Checking 14 rules…"}</span></div> : <Button size="lg" disabled={!inspection} onClick={() => { setPhase(0); setChecking(true); }}><ScanLine className="h-4 w-4" />Check this design<ArrowRight className="h-4 w-4" /></Button>}
       </div>
     </div>
     <footer className="flex flex-wrap items-center justify-between gap-2 pt-4 text-sm">
