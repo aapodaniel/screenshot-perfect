@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { CheckerHeader } from "./CheckerHeader";
+import { nextNonconformity } from "@/lib/headerPresentation";
 import { DrawingViewer } from "./DrawingViewer";
 import { EvidenceChain } from "./EvidenceChain";
 import { QuestionList } from "./QuestionList";
@@ -69,19 +72,14 @@ export function CheckerWorkspace({ id, calibrate = false, initialChecked = false
   if (!insp) return <div className="p-4 font-mono text-xs">LOADING DRAWING</div>;
   return <>
   <div className="checker-workspace no-print">
-    <nav className="workflow-steps" aria-label="Drawing checking workflow">{['LOAD DRAWING','RUN CHECK','REVIEW NOTES','DAILY REPORT'].map((label,i) => <span key={label}>{i>0 && <span className="workflow-arrow">→</span>}{i===3 ? <Button variant="ghost" asChild><Link to="/report" onClick={dismissHint}>4 {label}</Link></Button> : i===0 ? <Button variant="ghost" asChild><Link to="/" onClick={()=>workspaceCommand('load')}>✓ {label}</Link></Button> : <Button variant="ghost" className={(i===1&&!checked || i===2&&checked)?'workflow-current':''} onClick={()=>i===1?run():workspaceCommand('review')}>{i===1&&checked ? '✓' : i+1} {label}</Button>}</span>)}</nav>
-    <div className="checker-toolbar">
-      <Button onClick={run} disabled={running || insp.status !== 'done'}>{running || insp.status !== 'done' ? 'CHECKING' : 'RUN CHECK'}</Button>
-      <Button variant="ghost" asChild><a href="/rules">RULE PACKS: {(packs ?? []).filter(p => insp.rule_set_ids.includes(p.id)).map(p => p.id.startsWith("ada") ? "ADA" : p.id.startsWith("dnv") ? "DNV" : p.authority).join(' · ') || 'LOADING'}</a></Button>
-      <div className="toolbar-toggles" aria-label="Show markup">SHOW: {(['FAIL','UNKNOWN','PASS'] as const).map(status => <Button key={status} variant="ghost" aria-pressed={visibility[status]} onClick={()=>setVisibility(v=>({...v,[status]:!v[status]}))}>{visibility[status]?'■':'□'} {status==='FAIL'?'NONCONFORMITIES':status==='UNKNOWN'?'NOT VERIFIED':'✓ OK'} {results.filter(r=>r.status===status).length}</Button>)}</div>
-      <div className="toolbar-zoom"><Button variant="ghost" aria-label="Zoom out" onClick={() => workspaceCommand('zoom-out')}>−</Button><Button variant="ghost" onClick={() => workspaceCommand('fit')} title="Fit drawing">{zoom}%</Button><Button variant="ghost" aria-label="Zoom in" onClick={() => workspaceCommand('zoom-in')}>+</Button></div>
-    </div>
+    <CheckerHeader loaded checked={checked} running={running || insp.status !== 'done'} results={results} packs={(packs ?? []).filter(p => insp.rule_set_ids.includes(p.id))} visibility={visibility} onToggle={status => { setVisibility(v => ({...v,[status]:!v[status]})); if (selected?.status === status) { setSelectedId(null); setPanel(null); } }} onLoad={() => workspaceCommand('load')} onRun={run} onReview={() => { const next = nextNonconformity(results,selectedId); if(next) { setVisibility(v => ({...v,FAIL:true})); choose(next); } }}/>
     <div className="checker-sheet-area">
       <div className="checker-canvas"><header className="canvas-heading">DRAWING</header>
         <DrawingViewer key={runId} compact hoveredResultId={hovered} onHoverResult={setHovered} calibrate={calibrate} elements={insp.elements} results={checked ? results.filter(r => visibility[r.status]) : []} markerLimit={running ? limit : undefined} selectedElementId={selected?.element_id ?? null} selectedResult={selected} onCursor={setCursor} onZoom={setZoom} onSelectElement={(eid,rid) => { const r = results.find(r => r.id === rid) ?? results.find(r => r.element_id === eid); if (r) choose(r); }} pdfUrl={pdf ? api.fileUrl(insp.id,pdf.id) : null} fileName={pdf?.name}/>
         {panel && <div className="checker-inspector">
           {panel === 'properties' && selected ? <EvidenceChain key={selected.id} result={selected} element={insp.elements.find(e => e.id === selected.element_id)} onClose={() => setPanel(null)} onReviewed={() => review.mutate(selected.id)} onNote={n => note.mutate({rid:selected.id,n})}/> : <section className="properties-panel"><header className="properties-heading"><span>{panel === 'missing' ? 'REQUIRED MEASUREMENTS' : 'MEASURED PROPERTIES'}</span><Button variant="ghost" aria-label="Close properties" onClick={() => setPanel(null)}>×</Button></header><div className="properties-body">{panel === 'missing' ? <QuestionList questions={insp.questions} elements={insp.elements} busy={answers.isPending} onRecheck={a => answers.mutate(a)}/> : <MeasurementsTable elements={insp.elements}/>}</div></section>}
         </div>}
+        <div className="canvas-zoom" aria-label="Drawing zoom"><Button variant="ghost" aria-label="Zoom out" onClick={() => workspaceCommand('zoom-out')}>−</Button><Button variant="ghost" onClick={() => workspaceCommand('fit')} title="Fit drawing">{zoom}%</Button><Button variant="ghost" aria-label="Zoom in" onClick={() => workspaceCommand('zoom-in')}>+</Button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" aria-label="Drawing options">⋯</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{[['missing','Required measurements'],['measurements','Measured properties'],['changes','Revision comparison'],['json','Export JSON']].map(([command,label])=><DropdownMenuItem key={command} onClick={()=>workspaceCommand(command ?? '')}>{label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu></div>
       </div>
       <aside className="checker-notes" aria-label="Checker's notes"><header>CHECKER'S NOTES {checked && <span className="font-mono">{problems.length}</span>}</header>
         {!checked ? <div className="notes-empty">{loadLines.map(line=><p className="font-mono text-xs" key={line}>{line}</p>)}</div> : <>
