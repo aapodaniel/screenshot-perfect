@@ -38,7 +38,10 @@ function NewInspection() {
     mutationFn: () => api.createInspection(name, files, sel),
     onSuccess: ({ id }) => nav({ to: "/inspections/$id", params: { id } }),
   });
-  const add = (fl: FileList | null) => fl && setFiles((f) => [...f, ...Array.from(fl)]);
+  const add = (fl: FileList | null) => {
+    const uploaded = Array.from(fl ?? []);
+    setFiles((f) => [...f, ...uploaded]);
+  };
 
   return (
     <div>
