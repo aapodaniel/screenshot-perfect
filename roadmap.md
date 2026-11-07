@@ -39,4 +39,4 @@
 # Unified header
 - [x] Replace three strips with title, workflow/counters and context-aware action zones
 - [x] Move rule packs into dropdown and zoom onto canvas; preserve secondary actions
-- [ ] Verify load, check, counters, review progression, report and legibility on desktop/mobile
+- [x] Verify load, check, counters, review progression, report and legibility on desktop/mobile
