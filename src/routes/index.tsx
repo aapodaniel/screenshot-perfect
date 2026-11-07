@@ -27,7 +27,7 @@ function DesignCheck() {
   const [phase, setPhase] = useState(0);
   useEffect(() => {
     if (!checking) return;
-    const timers = [window.setTimeout(() => setPhase(1), 700), window.setTimeout(() => setPhase(2), 1400), window.setTimeout(() => setPhase(3), 1850), window.setTimeout(() => setPhase(4), 2000), window.setTimeout(() => setPhase(5), 2150), window.setTimeout(() => setPhase(6), 2300), window.setTimeout(() => setPhase(7), 2450), window.setTimeout(() => navigate({ to: "/inspections/$id", params: { id: DEMO_ID }, search: { calibrate } }), 2600)];
+    const timers = [window.setTimeout(() => setPhase(1), 700), window.setTimeout(() => setPhase(2), 1400), window.setTimeout(() => setPhase(3), 1850), window.setTimeout(() => setPhase(4), 2000), window.setTimeout(() => setPhase(5), 2150), window.setTimeout(() => setPhase(6), 2300), window.setTimeout(() => setPhase(7), 2450), window.setTimeout(() => navigate({ to: "/inspections/$id", params: { id: DEMO_ID }, search: { calibrate: calibrate ?? "" } }), 2600)];
     return () => timers.forEach(window.clearTimeout);
   }, [checking, navigate, calibrate]);
   return <div className="design-home">
