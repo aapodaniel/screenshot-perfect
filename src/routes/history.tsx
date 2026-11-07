@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, CircleHelp, FlaskConical, Plus, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/AppShell";
 import { api, DEMO_ID, qk } from "@/lib/api";
@@ -25,20 +24,20 @@ function History() {
   const nav = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["inspections", ...qk.all()], queryFn: api.inspections, refetchInterval: 3000 });
   return (
-    <div>
-      <PageHeader title="History" sub="Check a design. See what breaks the rules — and the evidence behind it."
+    <div className="checker-document-page">
+      <PageHeader title="History"
         actions={<>
-          <Button variant="outline" onClick={() => nav({ to: "/inspections/$id", params: { id: DEMO_ID } })}><FlaskConical className="h-4 w-4" />Load demo inspection</Button>
-          <Button size="lg" asChild><Link to="/inspections/new"><Plus className="h-4 w-4" />New inspection</Link></Button>
+          <Button variant="outline" onClick={() => nav({ to: "/inspections/$id", params: { id: DEMO_ID } })}>Load demo inspection</Button>
+          <Button size="lg" asChild><Link to="/inspections/new">New inspection</Link></Button>
         </>} />
       <div className="p-8">
-        <div className="overflow-x-auto rounded-md border bg-card">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th><th className="px-4 py-2 font-medium">Date</th><th className="px-4 py-2 text-right font-medium">Files</th>
-                <th className="px-4 py-2 text-right font-medium text-pass"><span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />OK</span></th><th className="px-4 py-2 text-right font-medium text-fail"><span className="inline-flex items-center gap-1"><XCircle className="h-3 w-3" />Violation</span></th>
-                <th className="px-4 py-2 text-right font-medium text-unknown"><span className="inline-flex items-center gap-1"><CircleHelp className="h-3 w-3" />Need more information</span></th><th className="px-4 py-2 font-medium">Change vs. previous revision</th>
+                <th className="px-4 py-2 text-right font-medium text-pass"><span className="inline-flex items-center gap-1">OK</span></th><th className="px-4 py-2 text-right font-medium text-fail"><span className="inline-flex items-center gap-1">Violation</span></th>
+                <th className="px-4 py-2 text-right font-medium text-unknown"><span className="inline-flex items-center gap-1">Not verified</span></th><th className="px-4 py-2 font-medium">Change vs. previous revision</th>
                 <th className="px-4 py-2 font-medium">Status</th>
               </tr>
             </thead>

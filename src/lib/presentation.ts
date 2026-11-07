@@ -24,7 +24,7 @@ export function findingTitle(r: Result): string {
 
 export function findingNumber(r: Result): string {
   if (r.status === "UNKNOWN") return r.evidence.length > 1 ? "Sources disagree — confirm the measurement" : "Measurement missing from drawing";
-  return `${r.measured} ${r.unit} · ${r.status === "FAIL" ? "needs" : "required"} ${r.required} ${r.unit}`;
+  return `${r.measured} ${r.unit} · ${r.status === "FAIL" ? "needs" : "required"} ${r.required.replace(/[≥≤<> =]/g, "")} ${r.unit}`;
 }
 
 export function revisionChange(result: Result, previous: Result[]): "New" | "Fixed" | "Unchanged" {
@@ -32,4 +32,17 @@ export function revisionChange(result: Result, previous: Result[]): "New" | "Fix
   if (result.status === "FAIL" && old?.status !== "FAIL") return "New";
   if (result.status !== "FAIL" && old?.status === "FAIL") return "Fixed";
   return "Unchanged";
+}
+/** Terse checker notes format existing decisions, never decide compliance. */
+export function checkerMeasurement(r: Result): string {
+  if (r.status === "UNKNOWN") return r.evidence.length > 1 ? "CONFLICTING SOURCES" : "MEASUREMENT REQUIRED";
+  return `${r.measured} ${r.status === "FAIL" ? ((r.condition.includes("<=") || r.condition.includes("≤")) ? ">" : "<") : " / "} ${r.required.replace(/[≥≤<> =]/g, "")} ${r.unit}`;
+}
+export function checkerFix(r: Result): string {
+  if (r.status === "FAIL" && r.required_inputs[0] === "clear_width_mm" && r.measured !== null) {
+    const minimum = Number(r.required.replace(/[^\d.]/g, ""));
+    if (Number.isFinite(minimum)) return `Widen ≥ ${minimum - r.measured} mm`;
+  }
+  if (r.status === "UNKNOWN") return r.evidence.length > 1 ? "Verify current source measurement" : `Provide ${r.check_name.toLowerCase()} (${r.unit})`;
+  return r.recommendation;
 }

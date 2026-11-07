@@ -35,7 +35,7 @@ use the editor.
 - Keep finding titles and revision display comparisons in `src/lib/presentation.ts`; these format engine results without making compliance decisions.
 - JSON rule imports are validated and self-tested through `src/lib/api.ts`, remain proposals until engineer approval, and failing rules cannot be approved.
 - Revision comparisons use explicit previous-revision references; never invent changes from inspection names or counts.
-- Inspection results use a viewport-height drawing-first workspace with independently scrolling right-side findings; full explanations open in an accessible dialog from the selected drawing callout so details do not permanently obscure the drawing.
-- Home previews the reference inspection via the API and stages the check animation client-side before opening its existing result; presentation timing never changes compliance decisions.
+- Home and inspection results share CheckerWorkspace, a viewport-height CAD canvas with independent ruled notes and an inline bottom properties inspector; one shared presentation avoids diverging checking flows.
+- RUN CHECK stages existing API results as client-side redline stroke animations; presentation timing and decorative cloud geometry never change compliance decisions.
 - Pre-bundle newly used Radix packages in Vite optimizeDeps.include; late dependency optimization can mix React instances and crash hooks in an already-open preview.
 - Reference drawings are CDN asset pointers displayed by DrawingViewer; demo finding geometry lives exclusively in normalized src/data/overlays.json mappings resolved by drawingOverlays.ts, never in PDF bboxes or compliance logic, so calibration changes cannot alter verdicts.

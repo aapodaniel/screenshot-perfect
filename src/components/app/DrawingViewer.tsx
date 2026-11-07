@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Maximize, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Result, ShipElement } from "@/lib/types";
-import { drawingCallout } from "@/lib/presentation";
+import { revisionCloud } from "@/lib/redlineGeometry";
 import { drawingSize, findingOverlay, normalizedPoint } from "@/lib/drawingOverlays";
 import referenceDrawing from "@/assets/rcrv-deck01-cabins.png.asset.json";
 import { statusColorVar, statusRank } from "./Status";
@@ -10,10 +9,10 @@ import { statusColorVar, statusRank } from "./Status";
 type VB = { x: number; y: number; w: number; h: number };
 type Box = { x: number; y: number; w: number; h: number };
 
-export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName, selectedResult, onWhy, markerLimit, calibrate = false }: {
+export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName, selectedResult, onWhy, markerLimit, calibrate = false, onCursor, onZoom, compact = false }: {
   elements: ShipElement[]; results: Result[]; selectedElementId: string | null; onSelectElement: (id: string, resultId?: string) => void;
   pdfUrl: string | null; fileName?: string | undefined;
-  selectedResult?: Result | null; onWhy?: () => void; markerLimit?: number | undefined; calibrate?: boolean;
+  selectedResult?: Result | null; onWhy?: () => void; markerLimit?: number | undefined; calibrate?: boolean; compact?: boolean; onCursor?: (p: { x: number; y: number } | null) => void; onZoom?: (percent: number) => void;
 }) {
   const pages = useMemo(() => [...new Set(elements.map((e) => e.page))].sort((a, b) => a - b), [elements]);
   const [page, setPage] = useState(pages[0] ?? 1);
@@ -74,7 +73,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     const [x0, y0, x1, y1] = el.bbox;
     return { x: x0, y: H - y1, w: x1 - x0, h: y1 - y0 };
   }
-  const selectedBox = selectedResult ? boxFor(selectedResult) : null;
+
 
   useEffect(() => {
     if (!selectedResult) return;
@@ -85,7 +84,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     const aspect = size.w / Math.max(size.h, 1);
     const w = Math.max(W * 0.4, b.w * 3.2, b.h * 1.5 * aspect);
     const h = w / aspect;
-    setVb({ x: b.x + b.w / 2 - w * 0.28, y: b.y + b.h / 2 - h * 0.54, w, h });
+    setVb({ x: b.x + b.w / 2 - w * 0.28, y: b.y + b.h / 2 - h * (compact ? 0.22 : 0.54), w, h });
   }, [selectedResult?.id, img?.src, size.w, size.h, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const svgPoint = (clientX: number, clientY: number) => {
@@ -99,6 +98,17 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     const p = anchor ?? { x: v.x + v.w / 2, y: v.y + v.h / 2 };
     return { x: p.x - (p.x - v.x) * k, y: p.y - (p.y - v.y) * k, w, h: v.h * k };
   });
+  useEffect(() => { onZoom?.(Math.round(W / vb.w * 100)); }, [W, vb.w, onZoom]);
+  useEffect(() => {
+    const command = (event: Event) => {
+      const action = (event as CustomEvent<string>).detail;
+      if (action === "fit") setVb(fit);
+      if (action === "zoom-in") zoom(1 / 1.3);
+      if (action === "zoom-out") zoom(1.3);
+    };
+    window.addEventListener("checker-command", command);
+    return () => window.removeEventListener("checker-command", command);
+  }, [W, H]);
   wheelHandler.current = (e) => {
     const p = svgPoint(e.clientX, e.clientY);
     if (!p) return;
@@ -110,6 +120,8 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const p = svgPoint(e.clientX, e.clientY);
+    onCursor?.(p ? normalizedPoint(p.x, p.y, W, H) : null);
     const d = drag.current;
     if (!d) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) d.moved = true;
@@ -127,58 +139,34 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
 
   const markers = [...results].filter((r) => r.status !== "PASS" && boxFor(r))
     .sort((a, b) => statusRank[a.status] - statusRank[b.status]).slice(0, markerLimit);
-  // Shared geometry has one marker; selecting a different check still resolves its own box.
-  const seen = new Set<string>();
-  const shown = markers.filter((r) => {
-    const b = boxFor(r), key = JSON.stringify(b);
-    if (seen.has(key)) return false;
-    seen.add(key); return true;
-  }).filter((r) => r.id !== selectedResult?.id);
-  if (selectedResult && selectedResult.status !== "PASS" && selectedBox) shown.push(selectedResult);
   const unit = Math.max(vb.w / Math.max(size.w, 1), vb.h / Math.max(size.h, 1));
-  const calloutPixels = Math.min(270, Math.max(155, size.w * 0.44));
-  const calloutWidth = calloutPixels * unit, calloutHeight = 190 * unit;
-  const calloutX = selectedBox ? Math.min(selectedBox.x + selectedBox.w + 26 * unit, vb.x + vb.w - calloutWidth - 12 * unit) : 0;
-  const calloutY = selectedBox ? Math.max(vb.y + 16 * unit, Math.min(selectedBox.y + selectedBox.h / 2 - calloutHeight / 2, vb.y + vb.h - calloutHeight - 70 * unit)) : 0;
-  const selectedElement = elements.find((e) => e.id === selectedElementId);
-
+  const allProblems = [...results].filter(r => r.status !== "PASS").sort((a,b) => statusRank[a.status] - statusRank[b.status]);
   return <div className="drawing-sheet flex h-full min-h-0 flex-col overflow-hidden bg-card">
-    <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3">
-      <span className="max-w-[300px] truncate text-xs text-muted-foreground">{reference ? "RCRV · Deck 01 · GA 6096-070-001" : fileName ?? "Drawing"}</span>
-      <div className="flex items-center gap-1">
-        {!reference && <select value={page} onChange={(e) => setPage(+e.target.value)} className="h-7 border bg-background px-1.5 font-mono text-xs" aria-label="Page">{(pdfPages.length ? pdfPages : pages.length ? pages : [1]).map((p) => <option key={p} value={p}>Page {p}</option>)}</select>}
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoom(1 / 1.3)} aria-label="Zoom in"><Plus className="h-3.5 w-3.5" /></Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => zoom(1.3)} aria-label="Zoom out"><Minus className="h-3.5 w-3.5" /></Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setVb(fit)} aria-label="Fit page"><Maximize className="h-3.5 w-3.5" /></Button>
-      </div>
-    </div>
+    {!compact && <div className="flex h-8 shrink-0 items-center justify-between border-b px-2">
+      <span className="font-mono text-xs">{reference ? "RCRV · DECK 01 · GA 6096-070-001" : fileName ?? "Drawing"}</span>
+      <div className="flex">{!reference && <select value={page} onChange={e => setPage(+e.target.value)} className="border bg-background font-mono text-xs" aria-label="Page">{(pdfPages.length ? pdfPages : pages).map(p => <option key={p} value={p}>Page {p}</option>)}</select>}
+      <Button variant="ghost" onClick={() => zoom(1.3)} aria-label="Zoom out">−</Button><Button variant="ghost" onClick={() => setVb(fit)}>Fit</Button><Button variant="ghost" onClick={() => zoom(1/1.3)} aria-label="Zoom in">+</Button></div>
+    </div>}
     <svg ref={svgRef} aria-label="Inspection drawing" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="block min-h-0 w-full flex-1 cursor-grab touch-none bg-canvas active:cursor-grabbing"
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { drag.current = null; }} preserveAspectRatio="xMidYMid meet">
       {reference ? <image href={referenceDrawing.url} x={0} y={0} width={W} height={H} /> : img && <image href={img.src} x={0} y={0} width={W} height={H} />}
-      {shown.map((r) => {
+      {[...markers].sort((a,b) => (a.status === "UNKNOWN" ? -1 : 1) - (b.status === "UNKNOWN" ? -1 : 1)).map((r) => {
         const b = boxFor(r);
         if (!b) return null;
         const color = statusColorVar[r.status];
+        const number = allProblems.findIndex(p => p.id === r.id) + 1;
+        const duplicates = markers.slice(0, markers.indexOf(r)).filter(p => JSON.stringify(boxFor(p)) === JSON.stringify(b)).length;
+        const bx = b.x + b.w + (30 + duplicates * 32) * unit;
+        const by = b.y + b.h * .25 + duplicates * 28 * unit;
         return <g key={r.id} data-element={r.element_id} data-finding={r.id} data-marker={r.status} className="cursor-pointer"
           onPointerDown={(e) => { if (!calibrate) e.stopPropagation(); }}
-          onClick={(e) => { if (!calibrate) { e.stopPropagation(); onSelectElement(r.element_id, r.id); } }}>
-          <rect x={b.x} y={b.y} width={b.w} height={b.h} fill="transparent" stroke={color} strokeWidth={r.status === "UNKNOWN" ? 1 : 2} strokeDasharray={r.status === "UNKNOWN" ? "6 4" : undefined} vectorEffect="non-scaling-stroke" />
-          {r.status === "UNKNOWN" && <g><rect x={b.x} y={b.y} width={18 * unit} height={20 * unit} fill="var(--card)" stroke={color} vectorEffect="non-scaling-stroke" /><text x={b.x + 9 * unit} y={b.y + 14 * unit} textAnchor="middle" fontSize={12 * unit} fill={color}>?</text></g>}
+          onClick={(e) => { if (!calibrate) { e.stopPropagation(); onSelectElement(r.element_id, r.id); onWhy?.(); } }}>
+          <path className="redline-cloud" d={revisionCloud(b, 18 * unit)} pathLength={1} fill="none" stroke={color} strokeWidth={2} strokeDasharray={r.status === "UNKNOWN" ? "0.012 0.008" : undefined} vectorEffect="non-scaling-stroke" />
+          <line x1={b.x + b.w} y1={b.y + b.h / 2} x2={bx} y2={by} stroke={color} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <circle cx={bx} cy={by} r={11 * unit} fill="var(--card)" stroke={color} strokeWidth={selectedResult?.id === r.id ? 2 : 1} vectorEffect="non-scaling-stroke" />
+          <text x={bx} y={by + 4 * unit} textAnchor="middle" fontSize={12 * unit} fontFamily="var(--font-mono)" fill={color}>{r.status === "UNKNOWN" ? "?" : number}</text>
         </g>;
       })}
-      {selectedResult && selectedBox && onWhy && <g data-callout={selectedResult.id}>
-        <line x1={selectedBox.x + selectedBox.w} y1={selectedBox.y + selectedBox.h / 2} x2={calloutX} y2={calloutY + 30 * unit} stroke={statusColorVar[selectedResult.status]} strokeWidth={2} vectorEffect="non-scaling-stroke" />
-        <foreignObject x={calloutX} y={calloutY} width={calloutWidth} height={calloutHeight} onPointerDown={(e) => e.stopPropagation()}>
-          <div className="drawing-callout-host" style={{ width: calloutPixels, transform: `scale(${unit})`, transformOrigin: "0 0" }}>
-            <div className="drawing-callout" data-status={selectedResult.status}>
-              <p className="text-[11px] font-semibold">{selectedResult.element_id}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">Cabin {selectedElement?.space}</p>
-              <p className="mt-2 text-xs leading-4">{drawingCallout(selectedResult)}</p>
-              <Button variant="link" size="sm" className="mt-1 h-6 p-0" onClick={onWhy}>Why?</Button>
-            </div>
-          </div>
-        </foreignObject>
-      </g>}
       {calibrate && point && <g pointerEvents="none"><path d={`M ${point.x * W - 8 * unit} ${point.y * H} h ${16 * unit} M ${point.x * W} ${point.y * H - 8 * unit} v ${16 * unit}`} stroke="var(--foreground)" vectorEffect="non-scaling-stroke" /></g>}
     </svg>
     {calibrate && <output aria-label="Calibration coordinates" className="calibration-coordinates">{point ? `x ${point.x.toFixed(4)} · y ${point.y.toFixed(4)}` : "Calibration · x — · y —"}</output>}

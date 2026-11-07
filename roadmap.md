@@ -21,3 +21,9 @@
 - [x] Apply light paper palette, Plex fonts, square controls, dense findings and plain sidebar
 - [x] Replace schematic with supplied real plan; preserve honest drawing identity and demo evidence
 - [x] Verify check, finding details, drawing controls and mobile layout
+
+# Redline workspace
+- [x] Replace sidebar and landing screen with canvas, menus, toolbar, notes and status bar
+- [x] Add revision clouds, numbered leaders and sequential stroke animation
+- [x] Add bottom properties inspector; preserve recheck, review, revision and reports
+- [x] Verify run, selection, calibration, menus and mobile layout
