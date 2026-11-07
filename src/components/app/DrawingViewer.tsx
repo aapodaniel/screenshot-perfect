@@ -61,9 +61,9 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     if (el.page !== page) setPage(el.page);
     const [x0, y0, x1, y1] = el.bbox;
     const aspect = (svgRef.current?.clientWidth ?? 640) / Math.max(svgRef.current?.clientHeight ?? 360, 1);
-    const w = Math.max(x1 - x0 + 420, (y1 - y0 + 220) * aspect), h = w / aspect;
+    const w = Math.max(x1 - x0 + 600, (y1 - y0 + 260) * aspect), h = w / aspect;
     const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
-    setVb({ x: cx - w / 2, y: cy - h / 2, w, h });
+    setVb({ x: cx - w / 2 + 90, y: cy - h / 2, w, h });
   }, [selectedElementId, img?.src]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const zoom = (f: number) => setVb((v) => { const w = Math.min(W * 1.5, Math.max(80, v.w * f)), h = w * (H / W); return { x: v.x + (v.w - w) / 2, y: v.y + (v.h - h) / 2, w, h }; });
@@ -124,7 +124,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           if (!el || el.page !== page) return null;
           const [x0, y0, x1, y1] = el.bbox;
           const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
-          const width = Math.min(290, vb.w * 0.48), height = Math.min(145, vb.h * 0.65);
+          const width = Math.min(260, vb.w * 0.42), height = Math.min(145, vb.h * 0.65);
           const x = Math.min(cx + 40, vb.x + vb.w - width - 12);
           const y = Math.max(vb.y + 12, cy - height / 2);
           return <g><line x1={cx + 14} y1={cy} x2={x} y2={y + height / 2} stroke={statusColorVar[selectedResult.status]} strokeWidth={2} />

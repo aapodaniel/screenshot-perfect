@@ -35,5 +35,6 @@ use the editor.
 - Keep finding titles and revision display comparisons in `src/lib/presentation.ts`; these format engine results without making compliance decisions.
 - JSON rule imports are validated and self-tested through `src/lib/api.ts`, remain proposals until engineer approval, and failing rules cannot be approved.
 - Revision comparisons use explicit previous-revision references; never invent changes from inspection names or counts.
-- Inspection results use a viewport-height workspace with independently scrolling findings and evidence, and a stacked drawing/detail grid; this prevents evidence from obscuring the drawing.
+- Inspection results use a viewport-height drawing-first workspace with independently scrolling right-side findings; full explanations open in an accessible dialog from the selected drawing callout so details do not permanently obscure the drawing.
+- Home previews the reference inspection via the API and stages the check animation client-side before opening its existing result; presentation timing never changes compliance decisions.
 - Pre-bundle newly used Radix packages in Vite optimizeDeps.include; late dependency optimization can mix React instances and crash hooks in an already-open preview.

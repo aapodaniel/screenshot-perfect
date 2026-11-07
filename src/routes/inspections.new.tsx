@@ -17,7 +17,7 @@ export const Route = createFileRoute("/inspections/new")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { title: "New inspection — ProvenAI" },
-      { name: "description", content: "Upload drawings, specs and models and choose rule sets to check against." },
+      { name: "description", content: "Upload drawings, specs and models and choose rules to check against." },
       { property: "og:title", content: "New inspection — ProvenAI" },
       { property: "og:description", content: "Upload design documents and run a compliance check." },
     ],
@@ -79,7 +79,7 @@ function NewInspection() {
         </div>
         <aside className="space-y-4">
           <div className="rounded-md border bg-card">
-            <div className="border-b px-4 py-2.5 text-sm font-medium">Choose rule packs</div>
+            <div className="border-b px-4 py-2.5 text-sm font-medium">Choose rules</div>
             <ul className="divide-y">
               {sets?.map((s) => (
                 <li key={s.id}>

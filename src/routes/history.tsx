@@ -38,7 +38,7 @@ function History() {
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th><th className="px-4 py-2 font-medium">Date</th><th className="px-4 py-2 text-right font-medium">Files</th>
                 <th className="px-4 py-2 text-right font-medium text-pass"><span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />OK</span></th><th className="px-4 py-2 text-right font-medium text-fail"><span className="inline-flex items-center gap-1"><XCircle className="h-3 w-3" />Violation</span></th>
-                <th className="px-4 py-2 text-right font-medium text-unknown"><span className="inline-flex items-center gap-1"><CircleHelp className="h-3 w-3" />Cannot check</span></th><th className="px-4 py-2 font-medium">Change vs. previous revision</th>
+                <th className="px-4 py-2 text-right font-medium text-unknown"><span className="inline-flex items-center gap-1"><CircleHelp className="h-3 w-3" />Need more information</span></th><th className="px-4 py-2 font-medium">Change vs. previous revision</th>
                 <th className="px-4 py-2 font-medium">Status</th>
               </tr>
             </thead>
