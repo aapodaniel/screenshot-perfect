@@ -29,10 +29,10 @@
 - [x] Verify run, selection, calibration, menus and mobile layout
 
 # Next redline iteration
-- [ ] Empty start sheet, truthful test loading and drawing drop flow
-- [ ] Clickable workflow, first-run hints and separate block headers
-- [ ] Strong linked markup, edge navigation, minimap and N/P keys
-- [ ] Independent status toggles and compact verified notes
-- [ ] Regulation/section/rule tree with tests and latest applications
-- [ ] Printable daily report with actual counts, crops and copy summary
-- [ ] Verify central flow, reports, imports and desktop/mobile screens
+- [x] Empty start sheet, truthful test loading and drawing drop flow (PDF preview; IFC/JSON extraction explicitly requires the inspection service)
+- [x] Clickable workflow, first-run hints and separate block headers
+- [x] Strong linked markup, edge navigation, minimap and N/P keys
+- [x] Independent status toggles and compact verified notes (reuse calibrated geometry only)
+- [x] Regulation/section/rule tree with tests and latest applications
+- [x] Printable daily report with actual counts, crops and copy summary (session work, explicit previous revision; no fabricated yesterday totals)
+- [x] Verify central flow, reports, imports and desktop/mobile screens
