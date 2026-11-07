@@ -77,7 +77,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
   const visible = elements.filter((e) => e.page === page);
   const ordered = [...visible].sort((a, b) => (a.type === "cabin" ? -1 : 1) - (b.type === "cabin" ? -1 : 1));
 
-  const markerIds = ordered.filter((el) => worst.get(el.id) === "FAIL" || worst.get(el.id) === "UNKNOWN").slice(0, markerLimit).map((el) => el.id);
+  const markerIds = ordered.filter((el) => worst.get(el.id) === "FAIL" || worst.get(el.id) === "UNKNOWN").sort((a, b) => (statusRank[worst.get(a.id) ?? "PASS"] - statusRank[worst.get(b.id) ?? "PASS"])).slice(0, markerLimit).map((el) => el.id);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">

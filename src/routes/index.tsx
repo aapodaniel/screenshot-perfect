@@ -25,7 +25,7 @@ function DesignCheck() {
   const [phase, setPhase] = useState(0);
   useEffect(() => {
     if (!checking) return;
-    const timers = [window.setTimeout(() => setPhase(1), 700), window.setTimeout(() => setPhase(2), 1400), window.setTimeout(() => setPhase(3), 1850), window.setTimeout(() => setPhase(4), 2050), window.setTimeout(() => navigate({ to: "/inspections/$id", params: { id: DEMO_ID } }), 2600)];
+    const timers = [window.setTimeout(() => setPhase(1), 700), window.setTimeout(() => setPhase(2), 1400), window.setTimeout(() => setPhase(3), 1850), window.setTimeout(() => setPhase(4), 2000), window.setTimeout(() => setPhase(5), 2150), window.setTimeout(() => setPhase(6), 2300), window.setTimeout(() => setPhase(7), 2450), window.setTimeout(() => navigate({ to: "/inspections/$id", params: { id: DEMO_ID } }), 2600)];
     return () => timers.forEach(window.clearTimeout);
   }, [checking, navigate]);
   return <div className="design-home">
@@ -35,7 +35,7 @@ function DesignCheck() {
       <p className="max-w-3xl text-base leading-6 text-muted-foreground">ProvenAI finds violations, shows where they are in the drawing, and tells you what it cannot check.</p>
     </header>
     <div className="relative mt-6 flex min-h-0 flex-1 flex-col overflow-hidden border bg-card">
-      {inspection ? <DrawingViewer elements={inspection.elements} results={phase >= 3 ? inspection.results : []} markerLimit={phase === 3 ? 1 : phase === 4 ? 3 : undefined} selectedElementId={null} onSelectElement={() => {}} pdfUrl={null} fileName="Deck 01 · Cabins · Demo drawing" /> : <div className="grid flex-1 place-items-center text-muted-foreground">Loading drawing…</div>}
+      {inspection ? <DrawingViewer elements={inspection.elements} results={phase >= 3 ? inspection.results : []} markerLimit={phase >= 3 ? phase - 2 : 0} selectedElementId={null} onSelectElement={() => {}} pdfUrl={null} fileName="Deck 01 · Cabins · Demo drawing" /> : <div className="grid flex-1 place-items-center text-muted-foreground">Loading drawing…</div>}
       <div className="absolute inset-x-0 bottom-8 flex justify-center px-4">
         {checking ? <div role="status" className="flex max-w-full flex-wrap items-center justify-center gap-3 border bg-card px-5 py-4 text-sm"><Loader2 className="h-4 w-4 animate-spin text-primary" /><span>{phase === 0 ? "Reading drawing…" : phase === 1 ? "Finding doors and cabins…" : "Checking 14 rules…"}</span></div> : <Button size="lg" className="h-14 px-8 text-base" disabled={!inspection} onClick={() => { setPhase(0); setChecking(true); }}><ScanLine className="h-5 w-5" />Check this design<ArrowRight className="h-5 w-5" /></Button>}
       </div>
