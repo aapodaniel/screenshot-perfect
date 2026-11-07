@@ -43,5 +43,6 @@ export function checkerFix(r: Result): string {
     const minimum = Number(r.required.replace(/[^\d.]/g, ""));
     if (Number.isFinite(minimum)) return `Widen ≥ ${minimum - r.measured} mm`;
   }
+  if (r.status === "UNKNOWN") return r.evidence.length > 1 ? "Verify current source measurement" : `Provide ${r.check_name.toLowerCase()} (${r.unit})`;
   return r.recommendation;
 }

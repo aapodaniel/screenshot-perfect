@@ -23,7 +23,7 @@
 - [x] Verify check, finding details, drawing controls and mobile layout
 
 # Redline workspace
-- [ ] Replace sidebar and landing screen with canvas, menus, toolbar, notes and status bar
-- [ ] Add revision clouds, numbered leaders and sequential stroke animation
-- [ ] Add bottom properties inspector; preserve recheck, review, revision and reports
-- [ ] Verify run, selection, calibration, menus and mobile layout
+- [x] Replace sidebar and landing screen with canvas, menus, toolbar, notes and status bar
+- [x] Add revision clouds, numbered leaders and sequential stroke animation
+- [x] Add bottom properties inspector; preserve recheck, review, revision and reports
+- [x] Verify run, selection, calibration, menus and mobile layout

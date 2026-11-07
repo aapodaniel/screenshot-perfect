@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Result, ShipElement } from "@/lib/api";
-import { checkerFix, checkerMeasurement } from "@/lib/presentation";
+import { checkerMeasurement } from "@/lib/presentation";
 export function EvidenceChain({ result: r, element, onClose, onReviewed, onNote }: {
   result: Result; element?: ShipElement | undefined; onClose: () => void; onReviewed: () => void; onNote: (n: string) => void;
 }) {
@@ -17,7 +17,8 @@ export function EvidenceChain({ result: r, element, onClose, onReviewed, onNote 
       <dt>SOURCE</dt><dd>{r.evidence.length ? r.evidence.map((e,i) => <details key={i}><summary>{e.source_file}{e.page ? ` · p.${e.page}` : ''}</summary><p>“{e.quote}”</p><p>{e.section}</p></details>) : "No source measurement"}</dd>
       <dt>METHOD</dt><dd>{r.evidence.map(e => e.method).join(' / ') || 'Not available'}</dd>
       <dt>CONFIDENCE</dt><dd>{r.confidence ?? 'Not available'}{r.evidence.length > 1 && ' · Conflicting sources, verify current measurement'}</dd>
-      <dt>FIX</dt><dd>{checkerFix(r)}</dd>
+      <dt>RESULT</dt><dd>{r.status} · {r.reason}</dd>
+      <dt>FIX</dt><dd>{r.recommendation}</dd>
     </dl><details className="border-t pt-2"><summary>Audit trail · {r.audit.length} events</summary>{r.audit.map((a,i) => <p key={i} className="text-xs"><span className="font-mono">{new Date(a.at).toISOString().slice(0,19).replace('T',' ')}</span> · {a.actor} · {a.event}</p>)}</details>
     {r.notes?.map((n,i) => <p className="border-t py-1" key={i}>{n}</p>)}
     {noteOpen && <div className="flex gap-2 py-2"><Textarea aria-label="Review note" value={note} onChange={e => setNote(e.target.value)} rows={2} autoFocus/><Button variant="outline" disabled={!note.trim()} onClick={() => { onNote(note.trim()); setNote(''); setNoteOpen(false); }}>Save note</Button></div>}

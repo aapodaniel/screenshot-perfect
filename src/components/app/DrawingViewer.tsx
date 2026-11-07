@@ -84,7 +84,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     const aspect = size.w / Math.max(size.h, 1);
     const w = Math.max(W * 0.4, b.w * 3.2, b.h * 1.5 * aspect);
     const h = w / aspect;
-    setVb({ x: b.x + b.w / 2 - w * 0.28, y: b.y + b.h / 2 - h * 0.54, w, h });
+    setVb({ x: b.x + b.w / 2 - w * 0.28, y: b.y + b.h / 2 - h * (compact ? 0.22 : 0.54), w, h });
   }, [selectedResult?.id, img?.src, size.w, size.h, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const svgPoint = (clientX: number, clientY: number) => {
