@@ -56,7 +56,7 @@ export function CheckerWorkspace({ id, calibrate = false, initialChecked = false
   <div className="checker-workspace no-print">
     <div className="checker-toolbar">
       <Button onClick={run} disabled={running || insp.status !== 'done'}>{running || insp.status !== 'done' ? 'CHECKING' : 'RUN CHECK'}</Button>
-      <Button variant="ghost" asChild><a href="/rules">RULE PACKS: {(packs ?? []).filter(p => insp.rule_set_ids.includes(p.id)).map(p => p.authority).join(' · ') || 'LOADING'}</a></Button>
+      <Button variant="ghost" asChild><a href="/rules">RULE PACKS: {(packs ?? []).filter(p => insp.rule_set_ids.includes(p.id)).map(p => p.id.startsWith("ada") ? "ADA" : p.id.startsWith("dnv") ? "DNV" : p.authority).join(' · ') || 'LOADING'}</a></Button>
       <label className="toolbar-filter">SHOW: <select aria-label="Show markup" value={show} onChange={e => setShow(e.target.value)}><option>REDLINES</option><option>UNKNOWNS</option><option>ALL</option></select></label>
       <div className="toolbar-zoom"><Button variant="ghost" aria-label="Zoom out" onClick={() => workspaceCommand('zoom-out')}>−</Button><Button variant="ghost" onClick={() => workspaceCommand('fit')} title="Fit drawing">{zoom}%</Button><Button variant="ghost" aria-label="Zoom in" onClick={() => workspaceCommand('zoom-in')}>+</Button></div>
     </div>

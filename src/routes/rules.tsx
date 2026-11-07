@@ -135,12 +135,12 @@ function Rules() {
     finally { setImportBusy(false); }
   };
   return (
-    <div>
-      <PageHeader title="Rules" sub="New rules need no code. Every rule is tested and approved by an engineer before use."
-        actions={<><Button variant="outline" onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Import rules</Button><Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Add rule</Button></>} />
+    <div className="checker-document-page">
+      <PageHeader title="Rules"
+        actions={<><Button variant="outline" onClick={() => input.current?.click()}>Import rules</Button><Button onClick={() => setAdding(true)}>Add rule</Button></>} />
       <input ref={input} type="file" accept=".json,application/json" hidden onChange={async (e) => { const file = e.target.files?.[0]; e.target.value = ""; if (!file) return; try { setImported(parseRulePack(JSON.parse(await file.text()))); } catch (err) { toast.error((err as Error).message); } }} />
       <div className="p-8">
-        <div className="overflow-hidden rounded-md border bg-card">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
               <tr>{["Rule", "Clause", "Condition", "Inputs", "Self-test"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
@@ -149,8 +149,8 @@ function Rules() {
               {[...(data ?? [])].sort((a, b) => a.rule_set.localeCompare(b.rule_set)).map((r, index, all) => {
                 const ok = r.tests.filter((t) => t.passed).length;
                 return (
-                  <Fragment key={r.id}>{(index === 0 || all[index - 1]?.rule_set !== r.rule_set) && <tr className="border-t bg-muted"><th colSpan={5} className="px-4 py-4 text-left font-medium">{r.rule_set}</th></tr>}<tr className="cursor-pointer border-t hover:bg-muted/50" onClick={() => setOpen(r)}>
-                    <td className="px-4 py-4 text-sm font-medium">{r.name}<div className="font-mono text-xs font-normal text-muted-foreground">{r.id}</div></td>
+                  <Fragment key={r.id}>{(index === 0 || all[index - 1]?.rule_set !== r.rule_set) && <tr className="border-t bg-muted"><th colSpan={5} className="px-4 py-2 text-left font-medium">{r.rule_set}</th></tr>}<tr className="cursor-pointer border-t hover:bg-muted/50" onClick={() => setOpen(r)}>
+                    <td className="px-4 py-2 text-sm font-medium">{r.name}<div className="font-mono text-xs font-normal text-muted-foreground">{r.id}</div></td>
                     <td className="px-3 py-2 text-xs">{r.clause_ref}<div className="text-muted-foreground">{r.name}</div></td>
                     
                     <td className="px-3 py-2 font-mono text-xs">{formatCondition(r)} {r.condition.unit}</td>
@@ -160,7 +160,7 @@ function Rules() {
                   </tr></Fragment>
                 );
               })}
-              {packs?.filter((pack) => !data?.some((r) => r.rule_set_id === pack.id)).map((pack) => <tr key={pack.id} className="border-t"><td colSpan={5} className="px-4 py-4"><span className="font-medium">{pack.name}</span><p className="mt-2 text-xs text-muted-foreground">No approved rules yet. Import rules or add a rule for engineer approval.</p></td></tr>)}
+              {packs?.filter((pack) => !data?.some((r) => r.rule_set_id === pack.id)).map((pack) => <tr key={pack.id} className="border-t"><td colSpan={5} className="px-4 py-2"><span className="font-medium">{pack.name}</span><p className="mt-2 text-xs text-muted-foreground">No approved rules yet. Import rules or add a rule for engineer approval.</p></td></tr>)}
             </tbody>
           </table>
         </div>
@@ -170,7 +170,7 @@ function Rules() {
           {open && <><SheetHeader><SheetTitle className="font-mono">{open.id}</SheetTitle><p className="text-sm text-muted-foreground">{open.rule_set} · {open.name}</p></SheetHeader><div className="mt-4 px-4"><RuleBody rule={open} /></div></>}
         </SheetContent>
       </Sheet>
-      <Dialog open={!!imported.length} onOpenChange={(o) => { if (!o) setImported([]); }}><DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Review imported rules</DialogTitle><DialogDescription>Rules stay locked until all tests pass and an engineer approves them.</DialogDescription></DialogHeader>{imported.map((r) => <section key={r.id} className="border-t py-4"><h2 className="mb-4 text-xl font-medium">{r.name}</h2><RuleBody rule={r} /></section>)}<Button variant="outline" disabled={importBusy || imported.some((r) => r.tests.some((t) => !t.passed))} onClick={approvePack}><ShieldCheck className="h-4 w-4" />Approve rules</Button></DialogContent></Dialog>
+      <Dialog open={!!imported.length} onOpenChange={(o) => { if (!o) setImported([]); }}><DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Review imported rules</DialogTitle><DialogDescription>Rules stay locked until all tests pass and an engineer approves them.</DialogDescription></DialogHeader>{imported.map((r) => <section key={r.id} className="border-t py-2"><h2 className="mb-4 text-xl font-medium">{r.name}</h2><RuleBody rule={r} /></section>)}<Button variant="outline" disabled={importBusy || imported.some((r) => r.tests.some((t) => !t.passed))} onClick={approvePack}><ShieldCheck className="h-4 w-4" />Approve rules</Button></DialogContent></Dialog>
       <AddRule open={adding} onOpenChange={setAdding} />
     </div>
   );

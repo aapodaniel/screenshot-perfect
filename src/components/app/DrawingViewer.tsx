@@ -150,7 +150,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     <svg ref={svgRef} aria-label="Inspection drawing" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="block min-h-0 w-full flex-1 cursor-grab touch-none bg-canvas active:cursor-grabbing"
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { drag.current = null; }} preserveAspectRatio="xMidYMid meet">
       {reference ? <image href={referenceDrawing.url} x={0} y={0} width={W} height={H} /> : img && <image href={img.src} x={0} y={0} width={W} height={H} />}
-      {markers.map((r) => {
+      {[...markers].sort((a,b) => (a.status === "UNKNOWN" ? -1 : 1) - (b.status === "UNKNOWN" ? -1 : 1)).map((r) => {
         const b = boxFor(r);
         if (!b) return null;
         const color = statusColorVar[r.status];
@@ -161,7 +161,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
         return <g key={r.id} data-element={r.element_id} data-finding={r.id} data-marker={r.status} className="cursor-pointer"
           onPointerDown={(e) => { if (!calibrate) e.stopPropagation(); }}
           onClick={(e) => { if (!calibrate) { e.stopPropagation(); onSelectElement(r.element_id, r.id); onWhy?.(); } }}>
-          <path className="redline-cloud" d={revisionCloud(b, 18 * unit)} pathLength={1} fill="none" stroke={color} strokeWidth={2} strokeDasharray={r.status === "UNKNOWN" ? "5 4" : undefined} vectorEffect="non-scaling-stroke" />
+          <path className="redline-cloud" d={revisionCloud(b, 18 * unit)} pathLength={1} fill="none" stroke={color} strokeWidth={2} strokeDasharray={r.status === "UNKNOWN" ? "0.012 0.008" : undefined} vectorEffect="non-scaling-stroke" />
           <line x1={b.x + b.w} y1={b.y + b.h / 2} x2={bx} y2={by} stroke={color} strokeWidth={1} vectorEffect="non-scaling-stroke" />
           <circle cx={bx} cy={by} r={11 * unit} fill="var(--card)" stroke={color} strokeWidth={selectedResult?.id === r.id ? 2 : 1} vectorEffect="non-scaling-stroke" />
           <text x={bx} y={by + 4 * unit} textAnchor="middle" fontSize={12 * unit} fontFamily="var(--font-mono)" fill={color}>{r.status === "UNKNOWN" ? "?" : number}</text>

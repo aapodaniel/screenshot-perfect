@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
       </DropdownMenuContent></DropdownMenu>
       <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">View</Button></DropdownMenuTrigger><DropdownMenuContent>
-        {[['fit','Fit drawing'],['missing','Required measurements'],['measurements','Measured properties'],['changes','Revision comparison']].map(([command,label]) => <DropdownMenuItem key={command} onClick={() => workspaceCommand(command)}>{label}</DropdownMenuItem>)}
+        {([['fit','Fit drawing'],['missing','Required measurements'],['measurements','Measured properties'],['changes','Revision comparison']] as const).map(([command,label]) => <DropdownMenuItem key={command} onClick={() => workspaceCommand(command)}>{label}</DropdownMenuItem>)}
       </DropdownMenuContent></DropdownMenu>
       <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost">Check</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onClick={() => workspaceCommand('run')}>Run check</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       <Button variant="ghost" asChild><Link to="/rules">Rules</Link></Button>

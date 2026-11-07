@@ -282,3 +282,12 @@ h1 { font-size: 24px !important; line-height: 1.25; }
  .checker-status > span:not(:first-child) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .redline-cloud, .checker-inspector { animation: none; } }
+
+.checker-document-page > .p-8 { padding: 8px 24px; }
+.checker-document-page table th, .checker-document-page table td { border-bottom: 1px solid var(--border); padding-top: 6px; padding-bottom: 6px; }
+.checker-document-page table thead, .checker-document-page table th { background: transparent; font-family: var(--font-label); }
+.checker-document-page table { background: transparent; }
+.document-settings { margin: 8px 24px; }
+.settings-rule { display: grid; grid-template-columns: 180px minmax(0,1fr); align-items: start; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.settings-rule > label { font: 12px var(--font-label); padding-top: 6px; }
+@media (max-width: 600px) { .settings-rule { grid-template-columns: minmax(0,1fr); gap: 8px; } .document-header { flex-wrap: wrap; gap: 8px; margin-inline: 12px; } .document-settings { margin-inline: 12px; } }
