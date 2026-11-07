@@ -1,4 +1,5 @@
-import { CheckCircle2, CircleHelp, Eye, XCircle } from "lucide-react";
+import { CheckCircle2, CircleHelp, XCircle } from "lucide-react";
+import { statusLabel } from "@/lib/presentation";
 import { cn } from "@/lib/utils";
 import type { Status } from "@/lib/types";
 
@@ -13,28 +14,23 @@ export function StatusBadge({ status, className }: { status: Status; className?:
   return (
     <span className={cn("inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] font-semibold tracking-wide", cls, className)}>
       <Icon className="h-3.5 w-3.5" aria-hidden />
-      {status}
+      {statusLabel[status]}
     </span>
   );
 }
 
 export function ReviewBadge({ className }: { className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded border border-review/30 bg-review-soft px-1.5 py-0.5 text-[11px] font-semibold text-review", className)}>
-      <Eye className="h-3.5 w-3.5" aria-hidden />
-      Needs review
-    </span>
-  );
+  return null;
 }
 
 export function ConfidenceTag({ c }: { c: "high" | "medium" | "low" | null }) {
   if (!c) return <span className="text-muted-foreground">—</span>;
   const bars = c === "high" ? 3 : c === "medium" ? 2 : 1;
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-xs", c === "low" ? "text-review" : "text-muted-foreground")}>
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <span className="flex gap-0.5" aria-hidden>
         {[0, 1, 2].map((i) => (
-          <span key={i} className={cn("h-2.5 w-1 rounded-sm", i < bars ? (c === "low" ? "bg-review" : "bg-foreground/60") : "bg-border")} />
+          <span key={i} className={cn("h-2.5 w-1 rounded-sm", i < bars ? "bg-foreground/60" : "bg-border")} />
         ))}
       </span>
       {c}
