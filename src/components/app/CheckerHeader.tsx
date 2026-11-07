@@ -11,16 +11,18 @@ export function CheckerHeader({ loaded = false, checked = false, running = false
   const stage = headerStage(loaded, checked, results);
   const failures = results.filter(result => result.status === 'FAIL').length;
   const authorities = [...new Set(packs.map(pack => pack.id.startsWith('ada') ? 'ADA' : pack.id.startsWith('dnv') ? 'DNV' : pack.authority))].join(' · ');
+  const packLabels = authorities.split(' · ').filter(Boolean);
+  const compactAuthorities = packLabels.length > 3 ? `${packLabels.slice(-3).join(' · ')} +${packLabels.length - 3}` : authorities;
   const labels = ['LOAD DRAWING', 'RUN CHECK', 'REVIEW NOTES', 'DAILY REPORT'];
   const current = { load: 0, run: 1, review: 2, report: 3 }[stage];
   const action = running ? 'CHECKING…' : stage === 'load' ? 'LOAD DRAWING' : stage === 'run' ? 'RUN CHECK ▸' : stage === 'review' ? `REVIEW ${failures} NONCONFORMITIES ▸` : 'SEND DAILY REPORT ▸';
-  const hint = stage === 'load' ? 'Start with the RCRV test drawing' : stage === 'run' ? `${results.length} rules · ${authorities || 'Loading rule packs'}` : stage === 'review' ? 'N = next note' : 'Summary for your supervisor';
+  const hint = stage === 'load' ? 'Start with the RCRV test drawing' : stage === 'run' ? `${results.length} rules · ${compactAuthorities || 'Loading rule packs'}` : stage === 'review' ? 'N = next note' : 'Summary for your supervisor';
   return <header className="checker-header no-print">
     <section className="header-title" aria-label="Open drawing">
       <span className="header-eyebrow">VESSEL / DRAWING</span>
       <strong>{title ?? (loaded ? 'RCRV · GA 6096-070-001' : 'NO DRAWING LOADED')}</strong>
       <span className="header-revision">{loaded ? 'REV J · DECK 01 · 1/8" = 1\'-0"' : 'REV — · DECK — · SCALE —'}</span>
-      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="header-packs">Checking against: {authorities || '—'} ▾</Button></DropdownMenuTrigger><DropdownMenuContent align="start">
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="header-packs" title={authorities}>Checking against: {compactAuthorities || '—'} ▾</Button></DropdownMenuTrigger><DropdownMenuContent align="start">
         {packs.map(pack => <DropdownMenuItem asChild key={pack.id}><Link to="/rules">{pack.name}</Link></DropdownMenuItem>)}
         <DropdownMenuItem asChild><Link to="/rules">Rule library</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link to="/" onClick={onLoad}>Load another drawing</Link></DropdownMenuItem>

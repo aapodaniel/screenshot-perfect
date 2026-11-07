@@ -433,6 +433,8 @@ h1 { font-size: 24px !important; line-height: 1.25; }
 .canvas-zoom button { height: 30px; padding: 0 10px; font: 13px var(--font-mono); }
 .checker-canvas:has(.checker-inspector) .canvas-zoom { bottom: calc(max(35%,210px) + 12px); }
 .checker-canvas .drawing-title-block { bottom: 52px; }
+.checker-canvas:has(.checker-inspector) .drawing-title-block { bottom: calc(max(35%,210px) + 52px); }
+.hint-run, .hint-note, .hint-report { top: 132px; left: 12px; right: auto; }
 .checker-status { height: 28px; font-size: 12px; }
 .checker-status > span:first-child { white-space: normal; }
 .checker-status > span { padding-inline: 6px; }
