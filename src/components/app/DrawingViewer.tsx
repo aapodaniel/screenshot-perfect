@@ -2,15 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Maximize, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Result, ShipElement, Status } from "@/lib/types";
+import { drawingCallout } from "@/lib/presentation";
 import { statusColorVar, statusRank } from "./Status";
 
 const PAGE_W = 1191, PAGE_H = 842; // A3 landscape in PDF points
 
 type VB = { x: number; y: number; w: number; h: number };
 
-export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName }: {
+export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName, selectedResult, onWhy, markerLimit }: {
   elements: ShipElement[]; results: Result[]; selectedElementId: string | null; onSelectElement: (id: string) => void;
   pdfUrl: string | null; fileName?: string | undefined;
+  selectedResult?: Result | null; onWhy?: () => void; markerLimit?: number | undefined;
 }) {
   const pages = useMemo(() => [...new Set(elements.map((e) => e.page))].sort((a, b) => a - b), [elements]);
   const [page, setPage] = useState(pages[0] ?? 1);
@@ -59,7 +61,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     if (el.page !== page) setPage(el.page);
     const [x0, y0, x1, y1] = el.bbox;
     const aspect = (svgRef.current?.clientWidth ?? 640) / Math.max(svgRef.current?.clientHeight ?? 360, 1);
-    const w = Math.max(x1 - x0 + 160, (y1 - y0 + 120) * aspect), h = w / aspect;
+    const w = Math.max(x1 - x0 + 420, (y1 - y0 + 220) * aspect), h = w / aspect;
     const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
     setVb({ x: cx - w / 2, y: cy - h / 2, w, h });
   }, [selectedElementId, img?.src]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -75,8 +77,10 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
   const visible = elements.filter((e) => e.page === page);
   const ordered = [...visible].sort((a, b) => (a.type === "cabin" ? -1 : 1) - (b.type === "cabin" ? -1 : 1));
 
+  const markerIds = ordered.filter((el) => worst.get(el.id) === "FAIL" || worst.get(el.id) === "UNKNOWN").slice(0, markerLimit).map((el) => el.id);
+
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden bg-card">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">
       <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3">
         <div className="flex items-center gap-2 text-xs">
           <span className="max-w-[240px] truncate text-muted-foreground">{fileName ?? "Drawing"}</span>
@@ -103,18 +107,36 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           const color = st ? statusColorVar[st] : "var(--muted-foreground)";
           const sel = el.id === selectedElementId;
           const number = results.findIndex((r) => r.element_id === el.id) + 1;
-          const marker = st === "FAIL" || st === "UNKNOWN";
+          const marker = markerIds.includes(el.id);
           const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
           const labelX = cx + 18, labelY = cy - 32;
           return (
             <g key={el.id} data-element={el.id} data-marker={marker ? st : undefined} opacity={selectedElementId && !sel && marker ? 0.5 : 1} onClick={(e) => { e.stopPropagation(); onSelectElement(el.id); }} className="cursor-pointer">
               <rect x={x0} y={H - y1} width={x1 - x0} height={y1 - y0} fill={color} fillOpacity={sel ? 0.12 : 0}
-                stroke={sel ? color : "var(--canvas-line)"} strokeOpacity={sel ? 1 : 0.25} strokeDasharray={st === "UNKNOWN" ? "8 4" : undefined} strokeWidth={sel ? 4 : 1} vectorEffect="non-scaling-stroke" />
+                stroke={sel || marker ? color : "var(--canvas-line)"} strokeOpacity={sel || marker ? 1 : 0.25} strokeDasharray={st === "UNKNOWN" ? "8 4" : undefined} strokeWidth={sel ? 4 : marker ? 2 : 1} vectorEffect="non-scaling-stroke" />
               {marker && number > 0 && <g><circle cx={cx} cy={cy} r={12} fill="var(--card)" stroke={color} strokeWidth={2} /><text x={cx} y={cy + 4} fontSize={11} fontFamily="JetBrains Mono, monospace" textAnchor="middle" fill={color}>{number}</text><rect x={labelX} y={labelY} width={el.id.length * 7 + 12} height={20} rx={2} fill="var(--card)" stroke="var(--border)" /><text x={labelX + 6} y={labelY + 14} fontSize={11} fontFamily="JetBrains Mono, monospace" fill="var(--foreground)">{el.id}</text></g>}
-              {!marker && <text x={x0 + 6} y={H - y1 + 16} fontSize={12} fontFamily="JetBrains Mono, monospace" fill="var(--canvas-line)">{el.type === "cabin" ? el.space : el.id}</text>}
+              {!marker && el.type === "cabin" && <text x={x0 + 6} y={H - y1 + 16} fontSize={12} fontFamily="JetBrains Mono, monospace" fill="var(--canvas-line)">{el.type === "cabin" ? el.space : el.id}</text>}
             </g>
           );
         })}
+        {selectedResult && onWhy && (() => {
+          const el = elements.find((e) => e.id === selectedResult.element_id);
+          if (!el || el.page !== page) return null;
+          const [x0, y0, x1, y1] = el.bbox;
+          const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
+          const width = Math.min(290, vb.w * 0.48), height = Math.min(145, vb.h * 0.65);
+          const x = Math.min(cx + 40, vb.x + vb.w - width - 12);
+          const y = Math.max(vb.y + 12, cy - height / 2);
+          return <g><line x1={cx + 14} y1={cy} x2={x} y2={y + height / 2} stroke={statusColorVar[selectedResult.status]} strokeWidth={2} />
+            <foreignObject x={x} y={y} width={width} height={height} onPointerDown={(e) => e.stopPropagation()}>
+              <div className="drawing-callout" data-status={selectedResult.status}>
+                <p className="text-xs font-medium text-muted-foreground">Cabin {el.space}</p>
+                <p className="mt-1 text-sm leading-5">{drawingCallout(selectedResult)}</p>
+                <Button variant="link" size="sm" className="mt-1 h-6 p-0 text-sm" onClick={onWhy}>Why?</Button>
+              </div>
+            </foreignObject>
+          </g>;
+        })()}
       </svg>
     </div>
   );
