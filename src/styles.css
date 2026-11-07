@@ -187,7 +187,7 @@ input, select, textarea, button { border-radius: 2px !important; }
 h1 { font-size: 24px !important; line-height: 1.25; }
 .app-sidebar nav a { border-left: 2px solid transparent; }
 .app-sidebar nav a.sidebar-active { border-left-color: var(--foreground); background: var(--sidebar); }
-.finding-row { min-height: 36px !important; padding: 4px 8px !important; border-bottom: 1px solid var(--border); text-transform: none; }
+.finding-row { min-height: 36px !important; padding: 2px 8px !important; border-bottom: 1px solid var(--border); text-transform: none; }
 .finding-row > span { display: flex; flex-wrap: wrap; column-gap: 8px; }
 .finding-row > span > span { font-size: 12px; line-height: 16px; }
 .finding-row > span > span:first-child { width: 100%; }
