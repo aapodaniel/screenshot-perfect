@@ -1,13 +1,13 @@
-// In-memory demo backend: a 60 m research vessel, GA drawing page 10, deck 1 cabins 01-36-1..3.
+// In-memory RCRV demo fixtures; measurements remain illustrative, not newly extracted from the public image.
 import { appliesTo, defaultTests, evaluate, formatCondition, requiredText, runTests, translateClause } from "./rulesEngine";
 import type {
   Answer, Attr, AuditEvent, Inspection, InspectionFile, InspectionSummary, Question, Result, Rule, RuleSet, ShipElement,
 } from "./types";
 
-const GA = "RV60-GA-Deck1_rev-D.pdf";
+const GA = "RCRV-GA-6096-070-001-Rev-J-demo.pdf";
 const SPEC = "Outfitting-spec_Accommodation_v3.docx";
 const DOORS = "Door-schedule_D-01.xlsx";
-const IFC = "RV60_accommodation.ifc";
+const IFC = "RCRV_accommodation-demo.ifc";
 
 export const ruleSets: RuleSet[] = [
   { id: "colreg-annex-i", name: "COLREG – Annex I", authority: "COLREG", description: "Navigation light checks — import an approved pack before use." },
@@ -88,9 +88,9 @@ const a = (value: number, unit: string, confidence: Attr["confidence"], quote: s
 function demoElements(): ShipElement[] {
   return [
     {
-      id: "CAB-01-36-1", type: "cabin", name: "Cabin 01-36-1", space: "01-36-1", deck: "Deck 1", page: 10, bbox: [380, 470, 560, 640],
+      id: "CAB-01-31-2", type: "cabin", name: "Cabin 01-31-2", space: "01-31-2", deck: "Deck 1", page: 10, bbox: [380, 470, 560, 640],
       attrs: {
-        floor_area_m2: a(6.8, "m²", "high", "Polyline area 6.80 m² (net, excl. WC 01-36-1W)", GA, 10, "Frame 36–41, PS", "Vector measurement"),
+        floor_area_m2: a(6.8, "m²", "high", "Polyline area 6.80 m² (net, excl. WC 01-31-2W)", GA, 10, "Frame 36–41, PS", "Vector measurement"),
         headroom_mm: a(2100, "mm", "high", "CLR. HEADROOM 2100", GA, 10, "Section B-B detail 4", "OCR"),
       },
     },
@@ -104,24 +104,24 @@ function demoElements(): ShipElement[] {
       },
     },
     {
-      id: "CAB-01-36-3", type: "cabin", name: "Cabin 01-36-3 (accessible)", space: "01-36-3", deck: "Deck 1", page: 10, bbox: [740, 470, 960, 640], accessible: true,
+      id: "CAB-01-26-2", type: "cabin", name: "Cabin 01-26-2 (accessible)", space: "01-26-2", deck: "Deck 1", page: 10, bbox: [740, 470, 960, 640], accessible: true,
       attrs: {
         floor_area_m2: a(9.2, "m²", "high", "Polyline area 9.18 m² (net, excl. accessible WC)", GA, 10, "Frame 46–52, PS", "Vector measurement"),
-        headroom_mm: a(2150, "mm", "high", "IfcSpace 01-36-3 Height = 2150", IFC, null, "IfcSpace GUID 2O2Fr$t4X7Zf8NOew3FLKr", "3D model"),
+        headroom_mm: a(2150, "mm", "high", "IfcSpace 01-26-2 Height = 2150", IFC, null, "IfcSpace GUID 2O2Fr$t4X7Zf8NOew3FLKr", "3D model"),
       },
     },
     {
-      id: "D-01-36-1", type: "door", name: "Door D-01-36-1", space: "01-36-1", deck: "Deck 1", page: 10, bbox: [445, 455, 495, 485],
-      attrs: { clear_width_mm: a(790, "mm", "low", "D-01-36-1 CLR 790 (smudged scan)", GA, 10, "Frame 38, corridor side", "Vector measurement") },
+      id: "D-01-31-2", type: "door", name: "Door D-01-31-2", space: "01-31-2", deck: "Deck 1", page: 10, bbox: [445, 455, 495, 485],
+      attrs: { clear_width_mm: a(790, "mm", "low", "D-01-31-2 CLR 790 (smudged scan)", GA, 10, "Frame 38, corridor side", "Vector measurement") },
     },
     {
       id: "D-01-36-2", type: "door", name: "Door D-01-36-2", space: "01-36-2", deck: "Deck 1", page: 10, bbox: [625, 455, 675, 485],
       attrs: { clear_width_mm: a(700, "mm", "high", "Door clear opening 700 between stop and leaf face", GA, 10, "Door tag at frame 43", "OCR") },
     },
     {
-      id: "D-01-36-3", type: "door", name: "Door D-01-36-3", space: "01-36-3", deck: "Deck 1", page: 10, bbox: [815, 455, 885, 485], accessible: true,
+      id: "D-01-26-2", type: "door", name: "Door D-01-26-2", space: "01-26-2", deck: "Deck 1", page: 10, bbox: [815, 455, 885, 485], accessible: true,
       attrs: {
-        clear_width_mm: a(815, "mm", "high", "Row 14: D-01-36-3 | A-60 | clear opening 815 mm", DOORS, 1, "Sheet 'Deck 1', row 14", "Text"),
+        clear_width_mm: a(815, "mm", "high", "Row 14: D-01-26-2 | A-60 | clear opening 815 mm", DOORS, 1, "Sheet 'Deck 1', row 14", "Text"),
         handle_height_mm: a(950, "mm", "high", "Lever handle centreline 950 mm AFF", SPEC, 9, "§3.6 Door hardware", "Text"),
       },
     },
@@ -196,7 +196,7 @@ function seed() {
   const mk = (id: string, name: string, daysAgo: number, mut?: (els: ShipElement[]) => void) => {
     const els = demoElements(); mut?.(els);
     const s: Stored = {
-      id, name, project: "RV60 Research Vessel · Hull 1147", created_at: new Date(Date.now() - daysAgo * 864e5).toISOString(),
+      id, name, project: "RCRV Research Vessel · Deck 01", created_at: new Date(Date.now() - daysAgo * 864e5).toISOString(),
       status: "done", progress: { step: 4, label: "Done" }, rule_set_ids: ruleSets.map((r) => r.id), files: demoFiles, elements: els,
       results: [], questions: [], _started: 0, _reviews: {},
     };
@@ -204,11 +204,11 @@ function seed() {
   };
   mk("rv60-rev-b", "GA Deck 1 accommodation — rev B", 21, (els) => {
     els.forEach((e) => { if (e.attrs["headroom_mm"]) delete e.attrs["headroom_mm"].conflicts; });
-    const door = els.find((e) => e.id === "D-01-36-3");
+    const door = els.find((e) => e.id === "D-01-26-2");
     if (door?.attrs["clear_width_mm"]) door.attrs["clear_width_mm"].value = 760;
   });
   mk("rv60-rev-c", "GA Deck 1 accommodation — rev C", 9, (els) => { els.forEach((e) => { if (e.attrs["headroom_mm"]) delete e.attrs["headroom_mm"].conflicts; }); });
-  mk(DEMO_ID, "GA Deck 1 accommodation — rev D", 0.2);
+  mk(DEMO_ID, "RCRV Deck 01 cabins — rev J", 0.2);
   const c = store.get("rv60-rev-c"), d = store.get(DEMO_ID);
   if (c) c.previous_revision = { id: "rv60-rev-b", label: "rev B" };
   if (d) d.previous_revision = { id: "rv60-rev-c", label: "rev C" };
@@ -255,7 +255,7 @@ export async function createInspection(name: string, files: File[], ruleSetIds: 
   const uploaded: InspectionFile[] = files.map((f, i) => ({ id: `u${i}`, name: f.name, size: f.size, type: f.type || "application/octet-stream" }));
   // Demo: uploaded files are analysed against the reference vessel model so the full flow is visible.
   const s: Stored = {
-    id, name: name || "Untitled inspection", project: "RV60 Research Vessel · Hull 1147", created_at: new Date().toISOString(),
+    id, name: name || "Untitled inspection", project: "RCRV Research Vessel · Deck 01", created_at: new Date().toISOString(),
     status: "queued", progress: { step: 0, label: "Queued" }, rule_set_ids: ruleSetIds,
     files: [...uploaded, ...demoFiles], elements: demoElements(), results: [], questions: [], _started: Date.now(), _reviews: {},
   };
