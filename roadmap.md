@@ -7,3 +7,10 @@
 - [x] Compact result header, chips, tabs and findings rows
 - [x] Stack drawing and full evidence details without overlap
 - [x] Verify viewport fit, filtering, drawing selection and preserved actions
+
+# Ten-second drawing demo
+- [x] Replace home table with drawing preview and animated one-click check; move table to History
+- [x] Drawing-first results, short right-side findings and Why callout
+- [x] Remove main-screen jargon and verify ADA 813 mm/demo counts
+- [x] Verify the home-to-result flow and preserved actions
+- [ ] Align overlays on the real RCRV drawing (blocked: drawing not attached)

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PageHeader } from "@/components/app/AppShell";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { InspectionStepper } from "@/components/app/InspectionStepper";
 import { StatCards } from "@/components/app/StatCards";
@@ -28,21 +29,21 @@ export const Route = createFileRoute("/inspections/$id")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { title: "Inspection result — ProvenAI" },
-      { name: "description", content: "Compliance results with the full evidence chain for every check." },
+      { name: "description", content: "Ship drawing violations, required measurements and clear explanations for every check." },
       { property: "og:title", content: "Inspection result — ProvenAI" },
-      { property: "og:description", content: "PASS / FAIL / UNKNOWN results with regulation, logic, evidence and decision." },
+      { property: "og:description", content: "See doors that are too narrow on the drawing, with the rule and the fix." },
     ],
   }),
   component: InspectionPage,
 });
 
-const STEPS = ["Ingesting documents", "Extracting evidence", "Evaluating rules", "Done"];
+const STEPS = ["Reading drawing", "Finding doors and cabins", "Checking rules", "Done"];
 
 function Progress({ insp }: { insp: Inspection }) {
   return (
     <div className="mx-auto max-w-lg p-10">
       <h2 className="text-base font-semibold">Running check…</h2>
-      <p className="text-sm text-muted-foreground">{insp.files.length} files · {insp.rule_set_ids.length} rule sets</p>
+      <p className="text-sm text-muted-foreground">{insp.files.length} files · {insp.rule_set_ids.length} groups of rules</p>
       <ol className="mt-6 space-y-3">
         {STEPS.map((s, i) => {
           const n = i + 1, done = insp.progress.step > n || insp.status === "done", cur = insp.progress.step === n;
@@ -70,6 +71,7 @@ function InspectionPage() {
     queryKey: key, queryFn: () => api.inspection(id),
     refetchInterval: (q) => (q.state.data?.status === "done" ? false : 1000),
   });
+  const [whyOpen, setWhyOpen] = useState(false);
   const [updated, setUpdated] = useState(0);
   const [showChanges, setShowChanges] = useState(false);
   const { data: previous } = useQuery({ queryKey: ["inspection", insp?.previous_revision?.id, ...qk.all()], queryFn: () => api.inspection(insp?.previous_revision?.id ?? ""), enabled: !!insp?.previous_revision });
@@ -96,10 +98,10 @@ function InspectionPage() {
         return (f.status === "all" || r.status === f.status) &&
           (!q || [r.check_name, r.element_id, r.clause_ref, el?.name].join(" ").toLowerCase().includes(q));
       })
-      .sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.element_id.localeCompare(b.element_id));
+      .sort((a, b) => statusRank[a.status] - statusRank[b.status] || (a.element_id === "D-01-36-2" ? -1 : b.element_id === "D-01-36-2" ? 1 : a.element_id.localeCompare(b.element_id)));
   }, [insp, f]);
 
-  if (error) return <div className="p-10 text-sm">Inspection not found. <Link to="/" className="text-primary underline">Back to inspections</Link></div>;
+  if (error) return <div className="p-10 text-sm">Inspection not found. <Link to="/" className="text-primary underline">Back to design check</Link></div>;
   if (!insp) return <div className="p-10 text-sm text-muted-foreground">Loading inspection…</div>;
   if (insp.status !== "done") return <><InspectionStepper step={3} /><PageHeader title={insp.name} sub={insp.project} /><Progress insp={insp} /></>;
 
@@ -128,7 +130,7 @@ function InspectionPage() {
         <Tabs defaultValue="results" className="inspection-result-tabs">
           <TabsList className="h-9 shrink-0 justify-start rounded-none border-b bg-transparent p-0">
             <TabsTrigger value="results" className="h-9 rounded-none px-4">Findings</TabsTrigger>
-            <TabsTrigger value="missing" className="h-9 rounded-none px-4">What we need from you <span className="ml-1.5 font-mono text-xs text-muted-foreground">{insp.questions.length}</span></TabsTrigger>
+            <TabsTrigger value="missing" className="h-9 rounded-none px-4">Need more information <span className="ml-1.5 font-mono text-xs text-muted-foreground">{insp.questions.length}</span></TabsTrigger>
             <TabsTrigger value="measurements" className="h-9 rounded-none px-4">Measurements</TabsTrigger>
           </TabsList>
           <TabsContent value="results" className="inspection-workspace mt-4 min-h-0 flex-1">
@@ -144,11 +146,9 @@ function InspectionPage() {
             </div>
             <div className="inspection-drawing-details">
               <DrawingViewer elements={insp.elements} results={insp.results} selectedElementId={selected?.element_id ?? null}
+                selectedResult={selected} onWhy={() => setWhyOpen(true)}
                 onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
                 pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf?.name} />
-              <section aria-label="Finding details" className="min-h-0 overflow-hidden border-t bg-card">
-                {selected ? <EvidenceChain key={selected.id} result={selected} element={insp.elements.find((e) => e.id === selected.element_id)} onClose={() => setSel(null)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} /> : <div className="grid h-full place-items-center text-sm text-muted-foreground">Select a finding to see why</div>}
-              </section>
             </div>
           </TabsContent>
           <TabsContent value="missing" className="mt-4 min-h-0 flex-1 overflow-y-auto">
@@ -157,6 +157,13 @@ function InspectionPage() {
           <TabsContent value="measurements" className="mt-4 min-h-0 flex-1 overflow-y-auto"><MeasurementsTable elements={insp.elements} /></TabsContent>
         </Tabs>
       </div>
+      <Dialog open={whyOpen} onOpenChange={setWhyOpen}>
+        <DialogContent className="flex h-[min(680px,85dvh)] max-w-5xl flex-col overflow-hidden p-0 pt-5">
+          <DialogTitle className="px-4 text-base font-medium">Why this finding?</DialogTitle>
+          <DialogDescription className="sr-only">The rule, measurement source and explanation, with review and notes.</DialogDescription>
+          {selected && <EvidenceChain key={selected.id} result={selected} element={insp.elements.find((e) => e.id === selected.element_id)} onClose={() => setWhyOpen(false)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} />}
+        </DialogContent>
+      </Dialog>
       <PrintReport insp={insp} />
     </div>
   );

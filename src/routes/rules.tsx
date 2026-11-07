@@ -91,7 +91,7 @@ function AddRule({ open, onOpenChange }: { open: boolean; onOpenChange: (o: bool
             <div className="grid grid-cols-2 gap-3">
               <Input placeholder="Clause reference, e.g. ADA 2010 §404.2.4.1" value={form.clause_ref} onChange={(e) => setForm({ ...form, clause_ref: e.target.value })} />
               <Input placeholder="Check name, e.g. Maneuvering clearance" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <select className="h-9 rounded-md border bg-background px-2 text-sm" value={form.rule_set_id} onChange={(e) => setForm({ ...form, rule_set_id: e.target.value })} aria-label="Rule set">
+              <select className="h-9 rounded-md border bg-background px-2 text-sm" value={form.rule_set_id} onChange={(e) => setForm({ ...form, rule_set_id: e.target.value })} aria-label="Rules">
                 {sets?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
               <select className="h-9 rounded-md border bg-background px-2 text-sm" value={form.applies_to} onChange={(e) => setForm({ ...form, applies_to: e.target.value as Rule["applies_to"] })} aria-label="Applies to">
@@ -130,14 +130,14 @@ function Rules() {
   const [importBusy, setImportBusy] = useState(false);
   const approvePack = async () => {
     setImportBusy(true);
-    try { for (const rule of imported) await api.approveRule(rule); await qc.invalidateQueries({ queryKey: ["rules"] }); setImported([]); toast.success("Rule pack approved"); }
+    try { for (const rule of imported) await api.approveRule(rule); await qc.invalidateQueries({ queryKey: ["rules"] }); setImported([]); toast.success("Rules approved"); }
     catch (e) { toast.error((e as Error).message); }
     finally { setImportBusy(false); }
   };
   return (
     <div>
-      <PageHeader title="Rule library" sub="New rules need no code. Every rule is tested and approved by an engineer before use."
-        actions={<><Button variant="outline" onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Import rule pack</Button><Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Add rule</Button></>} />
+      <PageHeader title="Rules" sub="New rules need no code. Every rule is tested and approved by an engineer before use."
+        actions={<><Button variant="outline" onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Import rules</Button><Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Add rule</Button></>} />
       <input ref={input} type="file" accept=".json,application/json" hidden onChange={async (e) => { const file = e.target.files?.[0]; e.target.value = ""; if (!file) return; try { setImported(parseRulePack(JSON.parse(await file.text()))); } catch (err) { toast.error((err as Error).message); } }} />
       <div className="p-8">
         <div className="overflow-hidden rounded-md border bg-card">
@@ -160,7 +160,7 @@ function Rules() {
                   </tr></Fragment>
                 );
               })}
-              {packs?.filter((pack) => !data?.some((r) => r.rule_set_id === pack.id)).map((pack) => <tr key={pack.id} className="border-t"><td colSpan={5} className="px-4 py-4"><span className="font-medium">{pack.name}</span><p className="mt-2 text-xs text-muted-foreground">No approved rules yet. Import a rule pack or add a rule for engineer approval.</p></td></tr>)}
+              {packs?.filter((pack) => !data?.some((r) => r.rule_set_id === pack.id)).map((pack) => <tr key={pack.id} className="border-t"><td colSpan={5} className="px-4 py-4"><span className="font-medium">{pack.name}</span><p className="mt-2 text-xs text-muted-foreground">No approved rules yet. Import rules or add a rule for engineer approval.</p></td></tr>)}
             </tbody>
           </table>
         </div>
@@ -170,7 +170,7 @@ function Rules() {
           {open && <><SheetHeader><SheetTitle className="font-mono">{open.id}</SheetTitle><p className="text-sm text-muted-foreground">{open.rule_set} · {open.name}</p></SheetHeader><div className="mt-4 px-4"><RuleBody rule={open} /></div></>}
         </SheetContent>
       </Sheet>
-      <Dialog open={!!imported.length} onOpenChange={(o) => { if (!o) setImported([]); }}><DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Review imported rule pack</DialogTitle><DialogDescription>Rules stay locked until all tests pass and an engineer approves them.</DialogDescription></DialogHeader>{imported.map((r) => <section key={r.id} className="border-t py-4"><h2 className="mb-4 text-xl font-medium">{r.name}</h2><RuleBody rule={r} /></section>)}<Button variant="outline" disabled={importBusy || imported.some((r) => r.tests.some((t) => !t.passed))} onClick={approvePack}><ShieldCheck className="h-4 w-4" />Approve rule pack</Button></DialogContent></Dialog>
+      <Dialog open={!!imported.length} onOpenChange={(o) => { if (!o) setImported([]); }}><DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Review imported rules</DialogTitle><DialogDescription>Rules stay locked until all tests pass and an engineer approves them.</DialogDescription></DialogHeader>{imported.map((r) => <section key={r.id} className="border-t py-4"><h2 className="mb-4 text-xl font-medium">{r.name}</h2><RuleBody rule={r} /></section>)}<Button variant="outline" disabled={importBusy || imported.some((r) => r.tests.some((t) => !t.passed))} onClick={approvePack}><ShieldCheck className="h-4 w-4" />Approve rules</Button></DialogContent></Dialog>
       <AddRule open={adding} onOpenChange={setAdding} />
     </div>
   );

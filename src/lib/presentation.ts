@@ -1,6 +1,15 @@
 import type { Result, Status } from "./api";
 
-export const statusLabel: Record<Status, string> = { PASS: "OK", FAIL: "Violation", UNKNOWN: "Cannot check" };
+export const statusLabel: Record<Status, string> = { PASS: "OK", FAIL: "Violation", UNKNOWN: "Need more information" };
+
+/** Presentation only: explain an existing engine decision without reevaluating it. */
+export function drawingCallout(r: Result): string {
+  if (r.status === "FAIL" && r.required_inputs[0] === "clear_width_mm" && r.measured !== null) {
+    const minimum = Number(r.required.replace(/[^\d.]/g, ""));
+    if (Number.isFinite(minimum)) return `Door ${minimum - r.measured} mm too narrow (${r.clause_ref.replace(" 2010", "")}). Fix: widen to ≥ ${minimum} mm.`;
+  }
+  return r.status === "UNKNOWN" ? `${findingTitle(r)}. Confirm the measurement to finish this check.` : r.reason;
+}
 
 export function findingTitle(r: Result): string {
   if (r.status === "UNKNOWN") return `${r.check_name.replace(/Clear /i, "")} ${r.evidence.length > 1 ? "has conflicting sources" : "unknown"}`;
