@@ -14,3 +14,8 @@
 - [x] Remove main-screen jargon and verify ADA 813 mm/demo counts
 - [x] Verify the home-to-result flow and preserved actions
 - [ ] Align overlays on the real RCRV drawing (blocked: drawing not attached)
+
+# CAD restyling
+- [ ] Apply light paper palette, Plex fonts, square controls, dense findings and plain sidebar
+- [ ] Replace schematic with supplied real plan; preserve honest drawing identity and demo evidence
+- [ ] Verify check, finding details, drawing controls and mobile layout
