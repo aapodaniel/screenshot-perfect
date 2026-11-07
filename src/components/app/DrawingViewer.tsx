@@ -58,9 +58,10 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     if (!el) return;
     if (el.page !== page) setPage(el.page);
     const [x0, y0, x1, y1] = el.bbox;
-    const w = Math.max((x1 - x0) * 4, 580), h = 842;
+    const aspect = (svgRef.current?.clientWidth ?? 640) / Math.max(svgRef.current?.clientHeight ?? 360, 1);
+    const w = Math.max(x1 - x0 + 160, (y1 - y0 + 120) * aspect), h = w / aspect;
     const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
-    setVb({ x: cx - w * 0.16, y: cy - h * 0.36, w, h });
+    setVb({ x: cx - w / 2, y: cy - h / 2, w, h });
   }, [selectedElementId, img?.src]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const zoom = (f: number) => setVb((v) => { const w = Math.min(W * 1.5, Math.max(80, v.w * f)), h = w * (H / W); return { x: v.x + (v.w - w) / 2, y: v.y + (v.h - h) / 2, w, h }; });
@@ -75,10 +76,10 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
   const ordered = [...visible].sort((a, b) => (a.type === "cabin" ? -1 : 1) - (b.type === "cabin" ? -1 : 1));
 
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
-      <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
+    <div className="flex min-h-0 flex-col overflow-hidden bg-card">
+      <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3">
         <div className="flex items-center gap-2 text-xs">
-          <span className="max-w-[240px] truncate font-mono text-muted-foreground">{fileName ?? "Drawing"}</span>
+          <span className="max-w-[240px] truncate text-muted-foreground">{fileName ?? "Drawing"}</span>
           {!img && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">Demo drawing</span>}
         </div>
         <div className="flex items-center gap-1">
@@ -90,7 +91,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setVb(fit)} aria-label="Fit page"><Maximize className="h-3.5 w-3.5" /></Button>
         </div>
       </div>
-      <svg ref={svgRef} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="block h-[728px] w-full cursor-grab touch-none bg-canvas active:cursor-grabbing"
+      <svg ref={svgRef} aria-label="Inspection drawing" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="block min-h-0 w-full flex-1 cursor-grab touch-none bg-canvas active:cursor-grabbing"
         onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => (drag.current = null)} preserveAspectRatio="xMidYMid meet">
         <defs>
           <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="var(--canvas-line)" strokeOpacity="0.08" /></pattern>
@@ -102,14 +103,15 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
           const color = st ? statusColorVar[st] : "var(--muted-foreground)";
           const sel = el.id === selectedElementId;
           const number = results.findIndex((r) => r.element_id === el.id) + 1;
+          const marker = st === "FAIL" || st === "UNKNOWN";
+          const cx = (x0 + x1) / 2, cy = H - (y0 + y1) / 2;
+          const labelX = cx + 18, labelY = cy - 32;
           return (
-            <g key={el.id} onClick={(e) => { e.stopPropagation(); onSelectElement(el.id); }} className="cursor-pointer">
+            <g key={el.id} data-element={el.id} data-marker={marker ? st : undefined} opacity={selectedElementId && !sel && marker ? 0.5 : 1} onClick={(e) => { e.stopPropagation(); onSelectElement(el.id); }} className="cursor-pointer">
               <rect x={x0} y={H - y1} width={x1 - x0} height={y1 - y0} fill={color} fillOpacity={sel ? 0.12 : 0}
-                stroke={sel ? color : "var(--canvas-line)"} strokeOpacity={sel ? 1 : 0.25} strokeDasharray={st === "UNKNOWN" ? "8 4" : undefined} strokeWidth={sel ? 3 : 1} />
-              {!sel && number > 0 && <g><circle cx={(x0 + x1) / 2} cy={H - (y0 + y1) / 2} r={12} fill="var(--card)" stroke={color} strokeWidth={2} /><text x={(x0 + x1) / 2} y={H - (y0 + y1) / 2 + 4} fontSize={11} textAnchor="middle" fill={color}>{number}</text></g>}
-              {sel && <g><line x1={(x0+x1)/2} x2={(x0+x1)/2} y1={H-y1} y2={H-y1-48} stroke={color} /><text x={x0-20} y={H-y1-64} fontSize={16} fontFamily="JetBrains Mono, monospace" fill={color}>{el.id}</text><text x={x0-20} y={H-y1-44} fontSize={12} fill={color}>{st === "FAIL" ? "✕ Violation" : st === "UNKNOWN" ? "? Cannot check" : "✓ OK"}</text></g>}
-              <text x={x0 + 6} y={el.type === "cabin" ? H - y1 + 16 : H - y0 + 14} fontSize={el.type === "cabin" ? 12 : 9}
-                fontFamily="JetBrains Mono, monospace" fill="var(--canvas-line)">{el.type === "cabin" ? el.space : el.id}</text>
+                stroke={sel ? color : "var(--canvas-line)"} strokeOpacity={sel ? 1 : 0.25} strokeDasharray={st === "UNKNOWN" ? "8 4" : undefined} strokeWidth={sel ? 4 : 1} vectorEffect="non-scaling-stroke" />
+              {marker && number > 0 && <g><circle cx={cx} cy={cy} r={12} fill="var(--card)" stroke={color} strokeWidth={2} /><text x={cx} y={cy + 4} fontSize={11} fontFamily="JetBrains Mono, monospace" textAnchor="middle" fill={color}>{number}</text><rect x={labelX} y={labelY} width={el.id.length * 7 + 12} height={20} rx={2} fill="var(--card)" stroke="var(--border)" /><text x={labelX + 6} y={labelY + 14} fontSize={11} fontFamily="JetBrains Mono, monospace" fill="var(--foreground)">{el.id}</text></g>}
+              {!marker && <text x={x0 + 6} y={H - y1 + 16} fontSize={12} fontFamily="JetBrains Mono, monospace" fill="var(--canvas-line)">{el.type === "cabin" ? el.space : el.id}</text>}
             </g>
           );
         })}

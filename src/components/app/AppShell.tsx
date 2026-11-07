@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Button>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print sticky top-0 z-20 flex h-12 items-center justify-between border-b bg-background/95 px-5 backdrop-blur">
+        <header className="no-print sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between border-b bg-background/95 px-5 backdrop-blur">
           <div className="flex items-baseline gap-2 text-sm">
             <span className="font-semibold">RV60 Research Vessel</span>
             <span className="font-mono text-xs text-muted-foreground">Hull 1147</span>
