@@ -324,6 +324,7 @@ h1 { font-size: 24px !important; line-height: 1.25; }
 .note-hovered { background: var(--card); outline: 1px solid var(--fail); outline-offset: -1px; }
 .verified-note { display: block; width: 100%; height: auto; text-align: left; white-space: normal; overflow-wrap: anywhere; padding: 6px 8px; border-bottom: 1px solid var(--border); font: 10px/1.5 var(--font-mono); color: var(--pass); }
 .drawing-minimap { position: absolute; bottom: 8px; left: 8px; width: 160px; height: 78px; border: 1px solid var(--foreground); background: var(--card); cursor: crosshair; }
+.checker-canvas:has(.checker-inspector) .drawing-minimap, .checker-canvas:has(.checker-inspector) .drawing-title-block { bottom: calc(max(35%, 210px) + 8px); }
 .edge-marker { position: absolute; color: var(--fail); background: var(--card); font: 600 12px var(--font-mono); height: 26px; padding: 2px 4px; border: 1px solid var(--fail); }
 .edge-left { left: 0; top: calc(20% + var(--edge-index) * 28px); }
 .edge-right { right: 0; top: calc(20% + var(--edge-index) * 28px); }
@@ -372,6 +373,7 @@ h1 { font-size: 24px !important; line-height: 1.25; }
   .hint-note { top: auto; bottom: 220px; }
   .hint-report { left: 16px; top: 170px; }
   .drawing-minimap { width: 100px; height: 49px; }
+  .checker-canvas:has(.checker-inspector) .drawing-minimap, .checker-canvas:has(.checker-inspector) .drawing-title-block { bottom: calc(max(70%, 180px) + 8px); }
   .rules-workspace { grid-template-columns: minmax(0,1fr); height: auto; margin-inline: 12px; }
   .rules-tree { border-right: 0; }
   .daily-report { margin: 0; padding: 12px; overflow-x: auto; }
