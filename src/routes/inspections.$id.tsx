@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Download, FileJson, Loader2, Printer, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PageHeader } from "@/components/app/AppShell";
+import { Switch } from "@/components/ui/switch";
+import { InspectionStepper } from "@/components/app/InspectionStepper";
 import { StatCards } from "@/components/app/StatCards";
 import { ResultsTable } from "@/components/app/ResultsTable";
 import { EvidenceChain } from "@/components/app/EvidenceChain";
@@ -66,13 +68,24 @@ function InspectionPage() {
     queryKey: key, queryFn: () => api.inspection(id),
     refetchInterval: (q) => (q.state.data?.status === "done" ? false : 1000),
   });
+  const [updated, setUpdated] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [showChanges, setShowChanges] = useState(false);
+  const { data: previous } = useQuery({ queryKey: ["inspection", insp?.previous_revision?.id, ...qk.all()], queryFn: () => api.inspection(insp?.previous_revision?.id ?? ""), enabled: !!insp?.previous_revision });
   const [sel, setSel] = useState<string | null>(null);
   const [f, setF] = useState({ status: "all", ruleSet: "all", type: "all", deck: "all", q: "" });
   const setData = (d: Inspection) => qc.setQueryData(key, d);
-  const answers = useMutation({ mutationFn: (a: Parameters<typeof api.submitAnswers>[1]) => api.submitAnswers(id, a), onSuccess: (d) => { setData(d); toast.success("Re-checked with your values"); } });
+  const answers = useMutation({ mutationFn: (a: Parameters<typeof api.submitAnswers>[1]) => api.submitAnswers(id, a), onSuccess: (d) => { setData(d); setUpdated((v) => v + 1); toast.success("Checks updated with your measurement"); } });
   const review = useMutation({ mutationFn: (rid: string) => api.markReviewed(id, rid), onSuccess: setData });
   const note = useMutation({ mutationFn: ({ rid, n }: { rid: string; n: string }) => api.addNote(id, rid, n), onSuccess: setData });
 
+  useEffect(() => {
+    if (insp?.status === "done" && !sel) {
+      const first = [...insp.results].sort((a, b) => statusRank[a.status] - statusRank[b.status] || (a.element_id === "D-01-36-2" ? -1 : b.element_id === "D-01-36-2" ? 1 : a.element_id.localeCompare(b.element_id)))[0];
+      if (first) setSel(first.id);
+    }
+  }, [insp?.id, insp?.status]);
+  const selectResult = (rid: string) => { setSel(rid); setDetailsOpen(true); };
   const rows = useMemo(() => {
     if (!insp) return [];
     const q = f.q.toLowerCase();
@@ -88,7 +101,7 @@ function InspectionPage() {
 
   if (error) return <div className="p-10 text-sm">Inspection not found. <Link to="/" className="text-primary underline">Back to inspections</Link></div>;
   if (!insp) return <div className="p-10 text-sm text-muted-foreground">Loading inspection…</div>;
-  if (insp.status !== "done") return <><PageHeader title={insp.name} sub={insp.project} /><Progress insp={insp} /></>;
+  if (insp.status !== "done") return <><InspectionStepper step={3} /><PageHeader title={insp.name} sub={insp.project} /><Progress insp={insp} /></>;
 
   const selected = insp.results.find((r) => r.id === sel) ?? null;
   const pdf = insp.files.find((x) => x.type === "application/pdf");
@@ -98,7 +111,7 @@ function InspectionPage() {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${insp.id}-report.json`; a.click();
   };
   const selects = [
-    { k: "status", label: "Status", opts: [["all", "All statuses"], ["FAIL", "FAIL"], ["UNKNOWN", "UNKNOWN"], ["PASS", "PASS"], ["REVIEW", "Needs review"]] },
+    { k: "status", label: "Status", opts: [["all", "All statuses"], ["FAIL", "Violation"], ["UNKNOWN", "Cannot check"], ["PASS", "OK"]] },
     { k: "ruleSet", label: "Rule set", opts: [["all", "All rule sets"], ...uniq(insp.results.map((r) => r.rule_set)).map((x) => [x, x])] },
     { k: "type", label: "Element type", opts: [["all", "All elements"], ...uniq(insp.elements.map((e) => e.type)).map((x) => [x, x.charAt(0).toUpperCase() + x.slice(1)])] },
     { k: "deck", label: "Space", opts: [["all", "All spaces"], ...uniq(insp.elements.map((e) => e.space)).map((x) => [x, `${x} · Deck 1`])] },
@@ -107,6 +120,7 @@ function InspectionPage() {
   return (
     <div>
       <div className="no-print">
+        <InspectionStepper step={3} />
         <PageHeader title={insp.name} sub={<>{insp.project} · <span className="font-mono">{insp.files.length} files</span></>}
           actions={
             <DropdownMenu>
@@ -117,16 +131,17 @@ function InspectionPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           } />
-        <div className="space-y-4 p-6">
-          <StatCards results={insp.results} />
+        <div className="space-y-4 p-8">
+          <StatCards results={insp.results} source={insp.name.replace(" accommodation", "")} updated={updated} />
           <Tabs defaultValue="results">
             <TabsList>
-              <TabsTrigger value="results">Results</TabsTrigger>
-              <TabsTrigger value="missing">Missing information <span className="ml-1.5 rounded bg-unknown-soft px-1.5 font-mono text-[10px] text-unknown">{insp.questions.length}</span></TabsTrigger>
+              <TabsTrigger value="results">Findings</TabsTrigger>
+              <TabsTrigger value="missing">What we need from you <span className="ml-1.5 rounded bg-unknown-soft px-1.5 font-mono text-[10px] text-unknown">{insp.questions.length}</span></TabsTrigger>
               <TabsTrigger value="measurements">Measurements</TabsTrigger>
             </TabsList>
             <TabsContent value="results" className="mt-3">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
+              {insp.previous_revision && <label className="mb-4 flex items-center gap-2 text-xs"><Switch checked={showChanges} onCheckedChange={setShowChanges} aria-label={`Show changes since ${insp.previous_revision.label}`} />Show changes since {insp.previous_revision.label}</label>}
+              <div className="mb-4 flex flex-wrap items-center gap-2">
                 {selects.map((s) => (
                   <select key={s.k} aria-label={s.label} value={f[s.k]} onChange={(e) => setF((v) => ({ ...v, [s.k]: e.target.value }))}
                     className="h-8 rounded-md border bg-card px-2 text-sm">
@@ -138,30 +153,21 @@ function InspectionPage() {
                   <Input value={f.q} onChange={(e) => setF((v) => ({ ...v, q: e.target.value }))} placeholder="Search check, element, clause" className="h-8 pl-8" />
                 </div>
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_380px] items-start gap-4">
-                <div className="space-y-4">
-                  <DrawingViewer elements={insp.elements} results={insp.results} selectedElementId={selected?.element_id ?? null}
-                    onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) setSel(r.id); }}
-                    pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf ? `${pdf.name} · p.10` : undefined} />
-                  <ResultsTable results={rows} elements={insp.elements} selectedId={sel} onSelect={(r) => setSel(r.id)} />
-                </div>
-                <div className="sticky top-16 h-[calc(100vh-5rem)] overflow-hidden rounded-md border bg-card">
-                  {selected ? (
+              <div className="inspection-workspace grid items-start gap-8">
+                <ResultsTable results={rows} elements={insp.elements} selectedId={sel} onSelect={(r) => selectResult(r.id)} previous={previous?.results} showChanges={showChanges} />
+                <div className="relative min-w-0">
+                  <DrawingViewer elements={insp.elements} results={rows} selectedElementId={selected?.element_id ?? null}
+                    onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
+                    pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf?.name} />
+                  {selected && detailsOpen && <div className="evidence-overlay absolute right-0 top-12 z-10 h-[680px] w-[min(440px,100%)] overflow-hidden border-l border-b bg-card shadow-lg">
                     <EvidenceChain key={selected.id} result={selected} element={insp.elements.find((e) => e.id === selected.element_id)}
-                      onClose={() => setSel(null)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} />
-                  ) : (
-                    <div className="grid h-full place-items-center p-8 text-center">
-                      <div>
-                        <p className="text-sm font-medium">Select a check to see its evidence chain</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Regulation → check logic → extracted evidence → decision → action → audit trail.</p>
-                      </div>
-                    </div>
-                  )}
+                      onClose={() => setDetailsOpen(false)} onReviewed={() => review.mutate(selected.id)} onNote={(n) => note.mutate({ rid: selected.id, n })} />
+                  </div>}
                 </div>
               </div>
             </TabsContent>
             <TabsContent value="missing" className="mt-3 max-w-4xl">
-              <p className="mb-3 text-sm text-muted-foreground">Ranked by how many UNKNOWN checks each answer resolves. Values you enter are logged as engineer input in the audit trail.</p>
+              <p className="mb-3 text-sm text-muted-foreground">Provide these measurements to resolve the most checks first. Your values are recorded in the audit trail.</p>
               <QuestionList questions={insp.questions} elements={insp.elements} busy={answers.isPending} onRecheck={(a) => answers.mutate(a)} />
             </TabsContent>
             <TabsContent value="measurements" className="mt-3"><MeasurementsTable elements={insp.elements} /></TabsContent>
