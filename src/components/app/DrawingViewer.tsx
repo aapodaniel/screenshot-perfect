@@ -9,10 +9,11 @@ import { statusColorVar, statusRank } from "./Status";
 type VB = { x: number; y: number; w: number; h: number };
 type Box = { x: number; y: number; w: number; h: number };
 
-export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName, selectedResult, onWhy, markerLimit, calibrate = false, onCursor, onZoom, compact = false }: {
+export function DrawingViewer({ elements, results, selectedElementId, onSelectElement, pdfUrl, fileName, selectedResult, onWhy, markerLimit, calibrate = false, onCursor, onZoom, compact = false, hoveredResultId, onHoverResult }: {
   elements: ShipElement[]; results: Result[]; selectedElementId: string | null; onSelectElement: (id: string, resultId?: string) => void;
   pdfUrl: string | null; fileName?: string | undefined;
   selectedResult?: Result | null; onWhy?: () => void; markerLimit?: number | undefined; calibrate?: boolean; compact?: boolean; onCursor?: (p: { x: number; y: number } | null) => void; onZoom?: (percent: number) => void;
+  hoveredResultId?: string | null; onHoverResult?: (id: string | null) => void;
 }) {
   const pages = useMemo(() => [...new Set(elements.map((e) => e.page))].sort((a, b) => a - b), [elements]);
   const [page, setPage] = useState(pages[0] ?? 1);
@@ -65,7 +66,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
 
   function boxFor(r: Result): Box | null {
     if (reference) {
-      const b = findingOverlay(r.id);
+      const b = findingOverlay(r.id, r.element_id);
       return b ? { x: b.x0 * W, y: b.y0 * H, w: (b.x1 - b.x0) * W, h: (b.y1 - b.y0) * H } : null;
     }
     const el = elements.find((e) => e.id === r.element_id);
@@ -137,10 +138,12 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     drag.current = null;
   };
 
-  const markers = [...results].filter((r) => r.status !== "PASS" && boxFor(r))
+  const markers = [...results].filter((r) => boxFor(r))
     .sort((a, b) => statusRank[a.status] - statusRank[b.status]).slice(0, markerLimit);
   const unit = Math.max(vb.w / Math.max(size.w, 1), vb.h / Math.max(size.h, 1));
   const allProblems = [...results].filter(r => r.status !== "PASS").sort((a,b) => statusRank[a.status] - statusRank[b.status]);
+  const visibleBox = { x: vb.x-(Math.max(0,size.w/Math.max(size.h,1)*vb.h-vb.w)/2), y:vb.y-(Math.max(0,size.h/Math.max(size.w,1)*vb.w-vb.h)/2), w:Math.max(vb.w,size.w/Math.max(size.h,1)*vb.h), h:Math.max(vb.h,size.h/Math.max(size.w,1)*vb.w) };
+  const offscreen = markers.filter(r => { const b=boxFor(r); return b && (b.x+b.w<visibleBox.x || b.x>visibleBox.x+visibleBox.w || b.y+b.h<visibleBox.y || b.y>visibleBox.y+visibleBox.h); });
   return <div className="drawing-sheet flex h-full min-h-0 flex-col overflow-hidden bg-card">
     {!compact && <div className="flex h-8 shrink-0 items-center justify-between border-b px-2">
       <span className="font-mono text-xs">{reference ? "RCRV · DECK 01 · GA 6096-070-001" : fileName ?? "Drawing"}</span>
@@ -149,7 +152,7 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
     </div>}
     <svg ref={svgRef} aria-label="Inspection drawing" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} className="block min-h-0 w-full flex-1 cursor-grab touch-none bg-canvas active:cursor-grabbing"
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { drag.current = null; }} preserveAspectRatio="xMidYMid meet">
-      {reference ? <image href={referenceDrawing.url} x={0} y={0} width={W} height={H} /> : img && <image href={img.src} x={0} y={0} width={W} height={H} />}
+      {reference ? <image className="drawing-image" opacity={markers.length ? .55 : 1} href={referenceDrawing.url} x={0} y={0} width={W} height={H} /> : img && <image opacity={markers.length ? .55 : 1} href={img.src} x={0} y={0} width={W} height={H} />}
       {[...markers].sort((a,b) => (a.status === "UNKNOWN" ? -1 : 1) - (b.status === "UNKNOWN" ? -1 : 1)).map((r) => {
         const b = boxFor(r);
         if (!b) return null;
@@ -158,17 +161,19 @@ export function DrawingViewer({ elements, results, selectedElementId, onSelectEl
         const duplicates = markers.slice(0, markers.indexOf(r)).filter(p => JSON.stringify(boxFor(p)) === JSON.stringify(b)).length;
         const bx = b.x + b.w + (30 + duplicates * 32) * unit;
         const by = b.y + b.h * .25 + duplicates * 28 * unit;
-        return <g key={r.id} data-element={r.element_id} data-finding={r.id} data-marker={r.status} className="cursor-pointer"
+        return <g key={r.id} data-element={r.element_id} data-finding={r.id} data-marker={r.status} className={`cursor-pointer ${hoveredResultId===r.id?'cloud-hovered':''}`} onMouseEnter={()=>onHoverResult?.(r.id)} onMouseLeave={()=>onHoverResult?.(null)}
           onPointerDown={(e) => { if (!calibrate) e.stopPropagation(); }}
           onClick={(e) => { if (!calibrate) { e.stopPropagation(); onSelectElement(r.element_id, r.id); onWhy?.(); } }}>
-          <path className="redline-cloud" d={revisionCloud(b, 18 * unit)} pathLength={1} fill="none" stroke={color} strokeWidth={2} strokeDasharray={r.status === "UNKNOWN" ? "0.012 0.008" : undefined} vectorEffect="non-scaling-stroke" />
+          {r.status==='PASS' ? <rect x={b.x} y={b.y} width={b.w} height={b.h} fill="none" stroke={color} strokeWidth={hoveredResultId===r.id?2:1} vectorEffect="non-scaling-stroke"/> : <path className="redline-cloud" d={revisionCloud(b, 18 * unit)} pathLength={1} fill={r.status==='FAIL'?'var(--redline-fill)':'none'} stroke={color} strokeWidth={hoveredResultId===r.id?5:3} strokeDasharray={r.status === "UNKNOWN" ? "0.012 0.008" : undefined} vectorEffect="non-scaling-stroke" />}
           <line x1={b.x + b.w} y1={b.y + b.h / 2} x2={bx} y2={by} stroke={color} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-          <circle cx={bx} cy={by} r={11 * unit} fill="var(--card)" stroke={color} strokeWidth={selectedResult?.id === r.id ? 2 : 1} vectorEffect="non-scaling-stroke" />
-          <text x={bx} y={by + 4 * unit} textAnchor="middle" fontSize={12 * unit} fontFamily="var(--font-mono)" fill={color}>{r.status === "UNKNOWN" ? "?" : number}</text>
+          <circle cx={bx} cy={by} r={(r.status==='PASS'?9:13) * unit} fill="var(--card)" stroke={color} strokeWidth={2} vectorEffect="non-scaling-stroke" />
+          <text x={bx} y={by + 4 * unit} textAnchor="middle" fontSize={13 * unit} fontWeight={600} fontFamily="var(--font-mono)" fill={color}>{r.status==='PASS'?'✓':r.status === "UNKNOWN" ? "?" : number}</text>
         </g>;
       })}
       {calibrate && point && <g pointerEvents="none"><path d={`M ${point.x * W - 8 * unit} ${point.y * H} h ${16 * unit} M ${point.x * W} ${point.y * H - 8 * unit} v ${16 * unit}`} stroke="var(--foreground)" vectorEffect="non-scaling-stroke" /></g>}
     </svg>
+    {offscreen.map((r,i)=>{ const b=boxFor(r); if(!b)return null; const left=b.x<visibleBox.x, right=b.x>visibleBox.x+visibleBox.w; return <Button key={r.id} variant="ghost" className={`edge-marker ${left?'edge-left':right?'edge-right':b.y<visibleBox.y?'edge-top':'edge-bottom'}`} style={{'--edge-index':i} as React.CSSProperties} aria-label={`Show off-screen note ${allProblems.findIndex(p=>p.id===r.id)+1}`} onClick={()=>onSelectElement(r.element_id,r.id)}>{left?'←':right?'→':b.y<visibleBox.y?'↑':'↓'} {r.status==='PASS'?'✓':allProblems.findIndex(p=>p.id===r.id)+1}</Button>; })}
+    {markers.length>0 && <svg className="drawing-minimap" aria-label="Drawing overview minimap" viewBox={`0 0 ${W} ${H}`} onClick={e=>{ const rect=e.currentTarget.getBoundingClientRect(); const x=(e.clientX-rect.left)/rect.width*W,y=(e.clientY-rect.top)/rect.height*H; setVb(v=>({...v,x:x-v.w/2,y:y-v.h/2})); }}><image href={reference?referenceDrawing.url:img?.src} width={W} height={H}/>{markers.map(r=>{const b=boxFor(r);return b?<circle key={r.id} cx={b.x+b.w/2} cy={b.y+b.h/2} r={22} fill={statusColorVar[r.status]} onClick={e=>{e.stopPropagation();onSelectElement(r.element_id,r.id);}}/>:null;})}<rect x={visibleBox.x} y={visibleBox.y} width={visibleBox.w} height={visibleBox.h} fill="none" stroke="var(--foreground)" strokeWidth={2} vectorEffect="non-scaling-stroke"/></svg>}
     {calibrate && <output aria-label="Calibration coordinates" className="calibration-coordinates">{point ? `x ${point.x.toFixed(4)} · y ${point.y.toFixed(4)}` : "Calibration · x — · y —"}</output>}
     {reference && <table className="drawing-title-block" aria-label="Drawing title block"><tbody>
       <tr><td>VESSEL</td><td>RCRV</td></tr>

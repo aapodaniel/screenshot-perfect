@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckerWorkspace } from "@/components/app/CheckerWorkspace";
-import { DEMO_ID } from "@/lib/api";
+import { DrawingStart } from "@/components/app/DrawingStart";
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { calibrate?: string } => ({ calibrate: String(search["calibrate"] ?? "") }),
   head: () => ({ meta: [
@@ -12,4 +11,4 @@ export const Route = createFileRoute("/")({
   ] }), component: DesignCheck,
 });
 
-function DesignCheck() { const { calibrate } = Route.useSearch(); return <CheckerWorkspace id={DEMO_ID} calibrate={calibrate === "1"}/>; }
+function DesignCheck() { const { calibrate } = Route.useSearch(); return <DrawingStart calibrate={calibrate === "1"}/>; }
