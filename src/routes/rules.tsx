@@ -145,7 +145,7 @@ function Rules() {
               <tr>{["Rule", "Clause", "Condition", "Inputs", "Self-test"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
             </thead>
             <tbody>
-              {data?.toSorted((a, b) => a.rule_set.localeCompare(b.rule_set)).map((r, index, all) => {
+              {[...(data ?? [])].sort((a, b) => a.rule_set.localeCompare(b.rule_set)).map((r, index, all) => {
                 const ok = r.tests.filter((t) => t.passed).length;
                 return (
                   <Fragment key={r.id}>{(index === 0 || all[index - 1]?.rule_set !== r.rule_set) && <tr className="border-t bg-muted"><th colSpan={5} className="px-4 py-4 text-left font-medium">{r.rule_set}</th></tr>}<tr className="cursor-pointer border-t hover:bg-muted/50" onClick={() => setOpen(r)}>

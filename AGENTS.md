@@ -32,3 +32,6 @@ use the editor.
 ## Project rules
 - All API calls and types go through `src/lib/api.ts`; demo mode and network-error fallback use `src/lib/mockData.ts` — keeps the app usable with zero backend.
 - PASS/FAIL/UNKNOWN is decided only in `src/lib/rulesEngine.ts` (covered by `rulesEngine.test.ts`); missing or conflicting evidence must yield UNKNOWN — core product principle.
+- Keep finding titles and revision display comparisons in `src/lib/presentation.ts`; these format engine results without making compliance decisions.
+- JSON rule imports are validated and self-tested through `src/lib/api.ts`, remain proposals until engineer approval, and failing rules cannot be approved.
+- Revision comparisons use explicit previous-revision references; never invent changes from inspection names or counts.

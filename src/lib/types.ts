@@ -86,7 +86,7 @@ export interface InspectionSummary {
   created_at: string;
   file_count: number;
   status: InspectionStatus;
-  changes?: { new_violations: number; fixed: number; previous_label: string };
+  changes?: { new_violations: number; fixed: number; previous_label: string } | undefined;
   counts: { pass: number; fail: number; unknown: number; review: number };
 }
 export interface RuleSet { id: string; name: string; authority: string; description: string }

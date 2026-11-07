@@ -8,7 +8,7 @@ import { StatusBadge } from "./Status";
 
 export function ResultsTable({ results, elements, selectedId, onSelect, previous, showChanges }: {
   results: Result[]; elements: ShipElement[]; selectedId: string | null; onSelect: (r: Result) => void;
-  previous?: Result[]; showChanges?: boolean;
+  previous?: Result[] | undefined; showChanges?: boolean;
 }) {
   const [passedOpen, setPassedOpen] = useState(false);
   const list = useRef<HTMLDivElement>(null);
