@@ -8,6 +8,7 @@ import { api, DEMO_ID, qk } from "@/lib/api";
 import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): { calibrate?: string } => ({ calibrate: String(search["calibrate"] ?? "") }),
   head: () => ({ meta: [
     { title: "Check a ship design — ProvenAI" },
     { name: "description", content: "Check a ship drawing against engineering rules. See door violations on the drawing and what needs more information." },
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function DesignCheck() {
+  const { calibrate } = Route.useSearch();
   useSettings();
   const navigate = useNavigate();
   const { data: inspection } = useQuery({ queryKey: ["inspection", DEMO_ID, ...qk.all()], queryFn: () => api.inspection(DEMO_ID) });
@@ -25,16 +27,16 @@ function DesignCheck() {
   const [phase, setPhase] = useState(0);
   useEffect(() => {
     if (!checking) return;
-    const timers = [window.setTimeout(() => setPhase(1), 700), window.setTimeout(() => setPhase(2), 1400), window.setTimeout(() => setPhase(3), 1850), window.setTimeout(() => setPhase(4), 2000), window.setTimeout(() => setPhase(5), 2150), window.setTimeout(() => setPhase(6), 2300), window.setTimeout(() => setPhase(7), 2450), window.setTimeout(() => navigate({ to: "/inspections/$id", params: { id: DEMO_ID } }), 2600)];
+    const timers = [window.setTimeout(() => setPhase(1), 700), window.setTimeout(() => setPhase(2), 1400), window.setTimeout(() => setPhase(3), 1850), window.setTimeout(() => setPhase(4), 2000), window.setTimeout(() => setPhase(5), 2150), window.setTimeout(() => setPhase(6), 2300), window.setTimeout(() => setPhase(7), 2450), window.setTimeout(() => navigate({ to: "/inspections/$id", params: { id: DEMO_ID }, search: { calibrate: calibrate ?? "" } }), 2600)];
     return () => timers.forEach(window.clearTimeout);
-  }, [checking, navigate]);
+  }, [checking, navigate, calibrate]);
   return <div className="design-home">
     <header className="space-y-3">
       <h1 className="text-2xl font-semibold leading-tight">Check a ship design against the rules.</h1>
       <p className="max-w-3xl text-sm leading-5 text-muted-foreground">ProvenAI finds violations, shows where they are in the drawing, and tells you what it cannot check.</p>
     </header>
     <div className="relative mt-6 flex min-h-0 flex-1 flex-col overflow-hidden border bg-card">
-      {inspection ? <DrawingViewer elements={inspection.elements} results={phase >= 3 ? inspection.results : []} markerLimit={phase >= 3 ? phase - 2 : 0} selectedElementId={null} onSelectElement={() => {}} pdfUrl={null} fileName="Deck 01 · Cabins · Demo drawing" /> : <div className="grid flex-1 place-items-center text-muted-foreground">Loading drawing…</div>}
+      {inspection ? <DrawingViewer calibrate={calibrate === "1"} elements={inspection.elements} results={phase >= 3 ? inspection.results : []} markerLimit={phase >= 3 ? phase - 2 : 0} selectedElementId={null} onSelectElement={() => {}} pdfUrl={null} fileName="Deck 01 · Cabins · Demo drawing" /> : <div className="grid flex-1 place-items-center text-muted-foreground">Loading drawing…</div>}
       <div className="absolute left-4 bottom-4 flex px-0">
         {checking ? <div role="status" className="flex h-8 max-w-full items-center gap-2 border bg-card px-3 text-xs"><Loader2 className="h-4 w-4 animate-spin text-primary" /><span>{phase === 0 ? "Reading drawing…" : phase === 1 ? "Finding doors and cabins…" : "Checking 14 rules…"}</span></div> : <Button size="lg" disabled={!inspection} onClick={() => { setPhase(0); setChecking(true); }}><ScanLine className="h-4 w-4" />Check this design<ArrowRight className="h-4 w-4" /></Button>}
       </div>

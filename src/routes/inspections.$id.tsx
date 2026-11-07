@@ -24,6 +24,7 @@ import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/inspections/$id")({
+  validateSearch: (search: Record<string, unknown>): { calibrate?: string } => ({ calibrate: String(search["calibrate"] ?? "") }),
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
@@ -64,6 +65,7 @@ function Progress({ insp }: { insp: Inspection }) {
 
 function InspectionPage() {
   const { id } = Route.useParams();
+  const { calibrate } = Route.useSearch();
   useSettings();
   const qc = useQueryClient();
   const key = ["inspection", id, ...qk.all()];
@@ -145,9 +147,9 @@ function InspectionPage() {
               <div className="min-h-0 flex-1 overflow-y-auto"><ResultsTable results={rows} elements={insp.elements} selectedId={sel} onSelect={(r) => selectResult(r.id)} previous={previous?.results} showChanges={showChanges} expandPassed={f.status === "PASS"} /></div>
             </div>
             <div className="inspection-drawing-details">
-              <DrawingViewer elements={insp.elements} results={insp.results} selectedElementId={selected?.element_id ?? null}
+              <DrawingViewer calibrate={calibrate === "1"} elements={insp.elements} results={insp.results} selectedElementId={selected?.element_id ?? null}
                 selectedResult={selected} onWhy={() => setWhyOpen(true)}
-                onSelectElement={(eid) => { const r = rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
+                onSelectElement={(eid, rid) => { const r = insp.results.find((x) => x.id === rid) ?? rows.find((x) => x.element_id === eid) ?? insp.results.find((x) => x.element_id === eid); if (r) selectResult(r.id); }}
                 pdfUrl={pdf ? api.fileUrl(insp.id, pdf.id) : null} fileName={pdf?.name} />
             </div>
           </TabsContent>

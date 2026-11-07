@@ -64,8 +64,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="app-topbar no-print sticky top-0 z-20 flex h-12 shrink-0 items-center justify-between border-b bg-card px-4">
           <div className="flex items-baseline gap-2 text-sm">
-            <span className="font-semibold">RV60 Research Vessel</span>
-            <span className="font-mono text-xs text-muted-foreground">Hull 1147</span>
+            <span className="font-semibold">RCRV Research Vessel</span>
+            <span className="font-mono text-xs text-muted-foreground">Deck 01 cabins</span>
           </div>
           <ApiStatus />
         </header>

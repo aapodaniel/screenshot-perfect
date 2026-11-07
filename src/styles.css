@@ -195,16 +195,13 @@ h1 { font-size: 24px !important; line-height: 1.25; }
 .drawing-title-block { position: absolute; right: 8px; bottom: 8px; background: var(--card); border: 1px solid var(--foreground); border-collapse: collapse; font: 10px var(--font-mono); }
 .drawing-title-block td { border: 1px solid var(--border); padding: 4px 8px; }
 .drawing-title-block td:first-child { color: var(--muted-foreground); }
-.reference-finding { position: absolute; left: 8px; bottom: 8px; max-width: 280px; }
+.calibration-coordinates { position: absolute; left: 8px; top: 48px; padding: 8px; background: var(--card); border: 1px solid var(--foreground); font: 12px var(--font-mono); pointer-events: none; }
 .drawing-callout { border: 1px solid var(--fail); background: var(--card); padding: 8px; font-family: var(--font-mono); }
 .drawing-callout[data-status="UNKNOWN"] { border: 1px dashed var(--unknown); }
 .drawing-callout[data-status="PASS"] { border: 1px solid var(--pass); }
 @media (max-width: 700px) {
   .drawing-title-block { font-size: 8px; }
   .drawing-title-block td { padding: 2px 4px; }
-  .reference-finding { position: static; max-width: none; margin: 4px; flex-shrink: 0; }
-  .reference-finding p:not(:first-child), .reference-finding button { display: inline; margin-right: 4px; }
-  .reference-finding p.text-muted-foreground:last-of-type { display: none; }
   .drawing-title-block { display: none; }
   .drawing-sheet > div:first-child > div:first-child { min-width: 0; }
   .drawing-sheet > div:first-child > div:last-child { flex-shrink: 0; }
