@@ -56,7 +56,7 @@ export function evaluate(rule: Rule, attr: Attr | undefined, elementName: string
   const sym = ok ? (v === c.value ? "=" : c.op === ">=" ? ">" : "<") : c.op === ">=" ? "<" : ">";
   const lowConf = attr.confidence === "low";
   const reason = ok
-    ? `${fmt(v)} ${c.unit} ${v === c.value ? "meets" : c.op === ">=" ? "is above" : "is below"} the required ${fmt(c.value)} ${c.unit} limit${v === c.value ? " exactly" : ` by ${fmt(diff)} ${c.unit}`}.
+    ? `${fmt(v)} ${c.unit} ${v === c.value ? "meets" : c.op === ">=" ? "is above" : "is below"} the required ${fmt(c.value)} ${c.unit} limit${v === c.value ? " exactly" : ` by ${fmt(diff)} ${c.unit}`}.`
     : `${fmt(v)} ${c.unit} is ${fmt(diff)} ${c.unit} ${c.op === ">=" ? "less" : "more"} than the required ${fmt(c.value)} ${c.unit}.`;
   return {
     status: ok ? "PASS" : "FAIL",
